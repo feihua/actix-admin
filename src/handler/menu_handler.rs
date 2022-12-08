@@ -69,7 +69,7 @@ pub async fn menu_save(item: web::Json<MenuSaveReq>, data: web::Data<AppState>) 
     let role = SysMenu {
         id: None,
         gmt_create: Some(FastDateTime::now()),
-        gmt_modified: None,
+        gmt_modified: Some(FastDateTime::now()),
         status_id: Some(menu.status_id),
         sort: Some(menu.sort),
         parent_id: Some(menu.parent_id),

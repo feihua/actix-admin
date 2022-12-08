@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use rbatis::rbdc::datetime::FastDateTime;
 use serde::{Deserialize, Serialize};
 use rbatis::rbatis::Rbatis;
@@ -101,7 +102,7 @@ impl_select_page!(SysMenuRole{select_page_by_name(name:&str) =>"
        where real_name != ''"});
 
 #[sql("select menu_id from sys_menu_role where role_id = ?")]
-pub async fn query_menu_by_role(rb: &Rbatis, role_id: i32) -> rbatis::Result<Vec<i32>> {
+pub async fn query_menu_by_role(rb: &Rbatis, role_id: i32) -> rbatis::Result<Vec<HashMap<String, i32>>> {
     impled!()
 }
 
