@@ -181,7 +181,11 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
     log::info!("query user_list params: {:?}", &item);
     let mut rb = &data.batis;
 
-    let result = SysUser::select_page(&mut rb, &PageRequest::new(item.page_no, item.page_size)).await;
+    let mobile = item.mobile.as_deref().unwrap_or_default();
+    let status_id = item.status_id.as_deref().unwrap_or_default();
+
+    let page=&PageRequest::new(item.page_no, item.page_size);
+    let result = SysUser::select_page_by_name(&mut rb, page,mobile,status_id).await;
 
     let resp = match result {
         Ok(d) => {

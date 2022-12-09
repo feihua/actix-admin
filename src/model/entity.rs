@@ -23,11 +23,14 @@ impl_select_page!(SysUser{select_page() =>"
      if !sql.contains('count'):
        order by gmt_create desc"});
 
-impl_select_page!(SysUser{select_page_by_name(name:&str) =>"
-     if name != null && name != '':
-       where real_name != #{name}
-     if name == '':
-       where real_name != ''"});
+impl_select_page!(SysUser{select_page_by_name(mobile:&str,status_id:&str) =>"
+      where 1=1
+     if mobile != null && mobile != '':
+       ` and mobile = #{mobile} `
+     if status_id != null && status_id != '':
+       ` and status_id = #{status_id} `
+     if !sql.contains('count'):
+        ` order by gmt_create desc `"});
 
 // user_role
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -71,11 +74,14 @@ impl_select_page!(SysRole{select_page() =>"
      if !sql.contains('count'):
        order by gmt_create desc"});
 
-impl_select_page!(SysRole{select_page_by_name(name:&str) =>"
-     if name != null && name != '':
-       where real_name != #{name}
-     if name == '':
-       where real_name != ''"});
+impl_select_page!(SysRole{select_page_by_name(role_name:&str,status_id:&str) =>"
+      where 1=1
+     if role_name != null && role_name != '':
+       ` and role_name = #{role_name} `
+     if status_id != null && status_id != '':
+       ` and status_id = #{status_id} `
+     if !sql.contains('count'):
+        ` order by gmt_create desc `"});
 
 //role_menu
 #[derive(Clone, Debug, Serialize, Deserialize)]

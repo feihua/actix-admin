@@ -7,7 +7,7 @@ pub struct RoleListReq {
     #[serde(rename = "pageSize")]
     pub page_size: u64,
     pub role_name: Option<String>,
-    pub status_id: Option<i32>,
+    pub status_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
