@@ -13,13 +13,8 @@ Content-Type: application/json
 > {% client.global.set("auth_token", response.body.data.token); %}
 
 ###查询用户菜单 query_user_menu
-POST {{host}}/api/query_user_menu
-Content-Type: application/json
+GET {{host}}/api/query_user_menu
 Authorization: Bearer {{auth_token}}
-
-{
-  "token": "18613030352"
-}
 
 
 ###用户列表 user_list

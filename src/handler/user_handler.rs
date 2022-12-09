@@ -1,4 +1,5 @@
-use actix_web::{post, Responder, Result, web};
+use actix_web::{HttpRequest, post, get, Responder, Result, web};
+use actix_web::http::header;
 use rbatis::rbdc::datetime::FastDateTime;
 use rbatis::sql::{PageRequest};
 use redis::Commands;
@@ -93,9 +94,42 @@ pub async fn login(item: web::Json<UserLoginReq>, data: web::Data<AppState>) -> 
 }
 
 
-#[post("/query_user_menu")]
-pub async fn query_user_menu(item: web::Json<QueryUserMenuReq>, data: web::Data<AppState>) -> Result<impl Responder> {
-    log::info!("query_user_menu params: {:?}", &item);
+#[get("/query_user_menu")]
+pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> Result<impl Responder> {
+    let def = header::HeaderValue::from_str("").unwrap();
+    let token = req
+        .headers()
+        .get("Authorization")
+        .unwrap_or(&def)
+        .to_str()
+        .ok()
+        .unwrap();
+
+    let split_vec = token.split_whitespace().collect::<Vec<_>>();
+    if split_vec.len() != 2 || split_vec[0] != "Bearer" {
+        let resp = BaseResponse {
+            msg: "the token format wrong".to_string(),
+            code: 1,
+            data: None
+        };
+        return Ok(web::Json(resp));
+    }
+    let token = split_vec[1];
+    let jwt_token_e = JWTToken::verify("123", &token);
+    let jwt_token = match jwt_token_e {
+        Ok(data) => { data }
+        Err(err) => {
+            let resp = BaseResponse {
+                msg: err.to_string(),
+                code: 1,
+                data: None
+            };
+            return Ok(web::Json(resp));
+        }
+    };
+
+    log::info!("query user menu params {:?}",jwt_token);
+
     let mut rb = &data.batis;
 
     let sys_user = SysUser::select_by_column(&mut rb, "id", "1").await;
