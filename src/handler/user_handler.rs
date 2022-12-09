@@ -142,15 +142,17 @@ pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> Res
 
     for x in data.unwrap().records {
         let y = x.clone();
-        sys_menu.push(MenuUserList {
-            id: y.id.unwrap(),
-            parent_id: y.parent_id.unwrap(),
-            name: y.menu_name.unwrap_or_default(),
-            icon: y.menu_icon.unwrap_or_default(),
-            api_url: y.api_url.as_ref().unwrap().to_string(),
-            menu_type: y.menu_type.unwrap(),
-            path: y.api_url.unwrap_or_default(),
-        });
+        if y.menu_type != Some(3) {
+            sys_menu.push(MenuUserList {
+                id: y.id.unwrap(),
+                parent_id: y.parent_id.unwrap(),
+                name: y.menu_name.unwrap_or_default(),
+                icon: y.menu_icon.unwrap_or_default(),
+                api_url: y.api_url.as_ref().unwrap().to_string(),
+                menu_type: y.menu_type.unwrap(),
+                path: y.menu_url.unwrap_or_default(),
+            });
+        }
 
         btn_menu.push(x.api_url.unwrap_or_default());
         btn_menu_str.push_str(&x.menu_name.unwrap_or_default());

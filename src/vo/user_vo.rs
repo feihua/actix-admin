@@ -55,7 +55,9 @@ pub struct MenuUserList {
 
 #[derive(Debug, Validate, Serialize, Deserialize)]
 pub struct UserListReq {
+    #[serde(rename = "current")]
     pub page_no: u64,
+    #[serde(rename = "pageSize")]
     pub page_size: u64,
     pub mobile: Option<String>,
     pub status_id: Option<String>,
