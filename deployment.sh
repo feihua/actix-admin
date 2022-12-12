@@ -16,7 +16,7 @@ docker rmi rust-admin:v1
 docker rmi $(docker images | grep "none" | awk '{print $3}')
 
 #构建服务
-docker build -t rust-admin:v1 -f Dockerfile .
+docker build -t rust-admin:v1 -f docs/Dockerfile .
 
 #启动服务
 docker run -itd --net=host --name=rust-admin rust-admin:v1
