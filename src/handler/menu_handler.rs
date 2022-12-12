@@ -72,7 +72,7 @@ pub async fn menu_save(item: web::Json<MenuSaveReq>, data: web::Data<AppState>) 
         gmt_modified: Some(FastDateTime::now()),
         status_id: Some(menu.status_id),
         sort: Some(menu.sort),
-        parent_id: Some(menu.parent_id),
+        parent_id: Some(menu.parent_id.unwrap_or(0)),
         menu_name: Some(menu.menu_name),
         menu_url: Some(menu.menu_url),
         api_url: Some(menu.api_url),
