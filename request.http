@@ -26,7 +26,7 @@ Authorization: Bearer {{auth_token}}
   "page_no": 1,
   "page_size": 10,
   "mobile": "18613030352",
-  "status_id": "123456"
+  "status_id": "1"
 }
 ###新增用户 user_save
 POST {{host}}/api/user_save
@@ -57,7 +57,7 @@ Authorization: Bearer {{auth_token}}
   "real_name": "test123",
   "remark": "test123",
   "sort": 1,
-  "status_id": 1
+  "status_id": "1"
 }
 
 ###查询角色菜单 query_role_menu
@@ -86,7 +86,7 @@ Authorization: Bearer {{auth_token}}
   "page_no": 1,
   "page_size": 10,
   "role_name": "koobe",
-  "status_id": 1
+  "status_id": "1"
 }
 ###新增角色 role_save
 POST {{host}}/api/role_save
