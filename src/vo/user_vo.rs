@@ -20,6 +20,41 @@ pub struct UserLoginData {
     pub token: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct QueryUserRoleReq {
+    pub user_id: i32,
+}
+
+#[derive(Debug, Serialize)]
+pub struct QueryUserRoleResp {
+    pub msg: String,
+    pub code: i32,
+    pub data: QueryUserRoleData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QueryUserRoleData {
+    pub sys_role_list: Vec<UserRoleList>,
+    pub user_role_ids: Vec<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserRoleList {
+    pub id: i32,
+    pub status_id: i32,
+    pub sort: i32,
+    pub role_name: String,
+    pub remark: String,
+    pub create_time: String,
+    pub update_time: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateUserRoleReq {
+    pub user_id: i32,
+    pub role_ids: Vec<i32>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryUserMenuReq {
     pub token: String,

@@ -4,7 +4,7 @@ use rbatis::rbdc::datetime::FastDateTime;
 use rbatis::sql::{PageRequest};
 use redis::Commands;
 use crate::AppState;
-use crate::model::entity::{SysMenu, SysUser};
+use crate::model::entity::{SysMenu, SysRole, SysRoleUser, SysUser};
 use crate::utils::error::WhoUnfollowedError;
 use crate::vo::user_vo::*;
 use crate::utils::jwt_util::JWTToken;
@@ -91,6 +91,90 @@ pub async fn login(item: web::Json<UserLoginReq>, data: web::Data<AppState>) -> 
             return Ok(web::Json(resp));
         }
     }
+}
+
+#[post("/query_user_role")]
+pub async fn query_user_role(item: web::Json<QueryUserRoleReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+    log::info!("query_user_role params: {:?}", item);
+    let mut rb = &data.batis;
+
+    let sys_role = SysRole::select_page(&mut rb, &PageRequest::new(1, 1000)).await;
+
+    let mut sys_role_list: Vec<UserRoleList> = Vec::new();
+    let mut user_role_ids: Vec<i32> = Vec::new();
+
+    for x in sys_role.unwrap().records {
+        sys_role_list.push(UserRoleList {
+            id: x.id.unwrap(),
+            status_id: x.status_id.unwrap(),
+            sort: x.sort.unwrap(),
+            role_name: x.role_name.unwrap_or_default(),
+            remark: x.remark.unwrap_or_default(),
+            create_time: x.gmt_create.unwrap().0.to_string(),
+            update_time: x.gmt_modified.unwrap().0.to_string(),
+        });
+
+        user_role_ids.push(x.id.unwrap_or_default());
+    }
+
+    let resp = QueryUserRoleResp {
+        msg: "successful".to_string(),
+        code: 0,
+        data: QueryUserRoleData {
+            sys_role_list,
+            user_role_ids,
+        },
+    };
+
+    Ok(web::Json(resp))
+}
+
+#[post("/update_user_role")]
+pub async fn update_user_role(item: web::Json<UpdateUserRoleReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+    log::info!("update_user_role params: {:?}", item);
+    let mut rb = &data.batis;
+
+    let user_role = item.0;
+    let user_id = user_role.user_id;
+    let role_ids = &user_role.role_ids;
+    let len = user_role.role_ids.len();
+
+    if user_id == 1 {
+        let resp = BaseResponse {
+            msg: "不能修改超级管理员的角色".to_string(),
+            code: 1,
+            data: None,
+        };
+        return Ok(web::Json(resp));
+    }
+
+    let sys_result = SysRoleUser::delete_by_column(&mut rb, "user_id", user_id).await;
+
+    if sys_result.is_err() {
+        let resp = BaseResponse {
+            msg: "更新用户角色异常".to_string(),
+            code: 1,
+            data: None,
+        };
+        return Ok(web::Json(resp));
+    }
+
+    let mut sys_role_user_list: Vec<SysRoleUser> = Vec::new();
+    for role_id in role_ids {
+        sys_role_user_list.push(SysRoleUser {
+            id: None,
+            gmt_create: Some(FastDateTime::now()),
+            gmt_modified: Some(FastDateTime::now()),
+            status_id: Some(1),
+            sort: Some(1),
+            role_id: Some(*role_id),
+            user_id: Some(user_id),
+        })
+    }
+
+    let result = SysRoleUser::insert_batch(&mut rb, &sys_role_user_list, len as u64).await;
+
+    return Ok(web::Json(handle_result(result)));
 }
 
 
@@ -297,13 +381,13 @@ pub async fn user_delete(item: web::Json<UserDeleteReq>, data: web::Data<AppStat
     Ok(web::Json(handle_result(result)))
 }
 
-#[post("/update_user_password", data = "<item>")]
-pub async fn update_user_password(item: web::Json<UserDeleteReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+#[post("/update_user_password")]
+pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("update_user_pwd params: {:?}", &item);
 
     let user_pwd = item.0;
 
-    let mut rb = RB.to_owned();
+    let mut rb = &data.batis;
 
     let user_result = SysUser::select_by_id(&mut rb, &user_pwd.id).await;
 

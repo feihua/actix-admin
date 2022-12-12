@@ -46,6 +46,8 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service((web::scope("/api"))
                 .service(user_handler::login)
+                .service(user_handler::query_user_role)
+                .service(user_handler::update_user_role)
                 .service(user_handler::query_user_menu)
                 .service(user_handler::user_list)
                 .service(user_handler::user_save)
