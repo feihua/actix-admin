@@ -51,6 +51,7 @@ async fn main() -> std::io::Result<()> {
                 .service(user_handler::user_save)
                 .service(user_handler::user_delete)
                 .service(user_handler::user_update)
+                .service(user_handler::update_user_password)
                 .service(role_handler::query_role_menu)
                 .service(role_handler::update_role_menu)
                 .service(role_handler::role_list)

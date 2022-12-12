@@ -110,7 +110,7 @@ pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> Res
         let resp = BaseResponse {
             msg: "the token format wrong".to_string(),
             code: 1,
-            data: None
+            data: None,
         };
         return Ok(web::Json(resp));
     }
@@ -122,7 +122,7 @@ pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> Res
             let resp = BaseResponse {
                 msg: err.to_string(),
                 code: 1,
-                data: None
+                data: None,
             };
             return Ok(web::Json(resp));
         }
@@ -184,8 +184,8 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
     let mobile = item.mobile.as_deref().unwrap_or_default();
     let status_id = item.status_id.as_deref().unwrap_or_default();
 
-    let page=&PageRequest::new(item.page_no, item.page_size);
-    let result = SysUser::select_page_by_name(&mut rb, page,mobile,status_id).await;
+    let page = &PageRequest::new(item.page_no, item.page_size);
+    let result = SysUser::select_page_by_name(&mut rb, page, mobile, status_id).await;
 
     let resp = match result {
         Ok(d) => {
@@ -297,3 +297,31 @@ pub async fn user_delete(item: web::Json<UserDeleteReq>, data: web::Data<AppStat
     Ok(web::Json(handle_result(result)))
 }
 
+#[post("/update_user_password", data = "<item>")]
+pub async fn update_user_password(item: web::Json<UserDeleteReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+    log::info!("update_user_pwd params: {:?}", &item);
+
+    let user_pwd = item.0;
+
+    let mut rb = RB.to_owned();
+
+    let user_result = SysUser::select_by_id(&mut rb, &user_pwd.id).await;
+
+    match user_result {
+        Ok(user) => {
+            let mut sys_user = user.unwrap();
+            sys_user.password = Some(user_pwd.re_pwd);
+            let result = SysUser::update_by_column(&mut rb, &sys_user, "id").await;
+
+            Ok(web::Json(handle_result(result)))
+        }
+        Err(err) => {
+            let resp = BaseResponse {
+                msg: err.to_string(),
+                code: 1,
+                data: None,
+            };
+            Ok(web::Json(resp))
+        }
+    }
+}
