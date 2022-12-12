@@ -12,7 +12,9 @@ create table sys_menu
     api_url      varchar(255)     default ''                null comment '接口URL',
     menu_icon    varchar(255)                               null comment '菜单图标',
     remark       varchar(255)                               null comment '备注',
-    menu_type    tinyint          default 1                 not null comment '菜单类型(1：目录   2：菜单   3：按钮)'
+    menu_type    tinyint          default 1                 not null comment '菜单类型(1：目录   2：菜单   3：按钮)',
+    constraint menu_name
+        unique (menu_name)
 )
     comment '菜单信息' charset = utf8mb4;
 
