@@ -141,6 +141,8 @@ pub async fn query_role_menu(item: web::Json<QueryRoleMenuReq>, data: web::Data<
             parent_id: x.parent_id.unwrap(),
             title: x.menu_name.unwrap_or_default(),
             key: y.id.unwrap().to_string(),
+            label: y.menu_name.unwrap_or_default(),
+            is_penultimate: y.parent_id == Some(2)
         });
     }
 
