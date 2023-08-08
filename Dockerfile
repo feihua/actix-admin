@@ -5,6 +5,6 @@ ENV TZ Asia/Shanghai
 WORKDIR /app
 
 COPY ./src/config/log4rs.yaml /app/src/config/log4rs.yaml
-COPY ./target/release/rust-admin /app/
+COPY ./target/release/actix-admin /app/
 
-CMD ["./rust-admin"]
+CMD ["./actix-admin"]
