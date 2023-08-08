@@ -1,14 +1,17 @@
+use std::collections::HashMap;
 use actix_web::{HttpRequest, post, get, Responder, Result, web};
 use actix_web::http::header;
-use rbatis::rbdc::datetime::FastDateTime;
+use rbatis::rbdc::datetime::DateTime;
 use rbatis::sql::{PageRequest};
-use redis::Commands;
+use rbs::to_value;
 use crate::AppState;
-use crate::model::entity::{SysMenu, SysRole, SysRoleUser, SysUser};
+use crate::model::user::{SysUser};
+use crate::model::menu::{SysMenu};
+use crate::model::role::{SysRole};
+use crate::model::user_role::{SysUserRole};
 use crate::utils::error::WhoUnfollowedError;
 use crate::vo::user_vo::*;
 use crate::utils::jwt_util::JWTToken;
-use crate::utils::redis_util::init_redis;
 use crate::vo::{BaseResponse, handle_result};
 
 #[post("/login")]
@@ -31,9 +34,9 @@ pub async fn login(item: web::Json<UserLoginReq>, data: web::Data<AppState>) -> 
             }
 
             let user = d.get(0).unwrap().clone();
-            let id = user.id.unwrap().to_string();
-            let username = user.real_name.unwrap();
-            let password = user.password.unwrap();
+            let id = user.id.unwrap();
+            let username = user.user_name;
+            let password = user.password;
 
             if password.ne(&item.password) {
                 let resp = BaseResponse {
@@ -52,7 +55,7 @@ pub async fn login(item: web::Json<UserLoginReq>, data: web::Data<AppState>) -> 
                 btn_menu.push(x.api_url.unwrap_or_default());
             }
 
-            match JWTToken::new(&id, &username, btn_menu).create_token("123") {
+            match JWTToken::new(id, &username, btn_menu).create_token("123") {
                 Ok(token) => {
                     let resp = BaseResponse {
                         msg: "successful".to_string(),
@@ -106,12 +109,12 @@ pub async fn query_user_role(item: web::Json<QueryUserRoleReq>, data: web::Data<
     for x in sys_role.unwrap().records {
         sys_role_list.push(UserRoleList {
             id: x.id.unwrap(),
-            status_id: x.status_id.unwrap(),
-            sort: x.sort.unwrap(),
-            role_name: x.role_name.unwrap_or_default(),
+            status_id: x.status_id,
+            sort: x.sort,
+            role_name: x.role_name,
             remark: x.remark.unwrap_or_default(),
-            create_time: x.gmt_create.unwrap().0.to_string(),
-            update_time: x.gmt_modified.unwrap().0.to_string(),
+            create_time: x.create_time.unwrap().0.to_string(),
+            update_time: x.update_time.unwrap().0.to_string(),
         });
 
         user_role_ids.push(x.id.unwrap_or_default());
@@ -148,7 +151,7 @@ pub async fn update_user_role(item: web::Json<UpdateUserRoleReq>, data: web::Dat
         return Ok(web::Json(resp));
     }
 
-    let sys_result = SysRoleUser::delete_by_column(&mut rb, "user_id", user_id).await;
+    let sys_result = SysUserRole::delete_by_column(&mut rb, "user_id", user_id).await;
 
     if sys_result.is_err() {
         let resp = BaseResponse {
@@ -159,20 +162,21 @@ pub async fn update_user_role(item: web::Json<UpdateUserRoleReq>, data: web::Dat
         return Ok(web::Json(resp));
     }
 
-    let mut sys_role_user_list: Vec<SysRoleUser> = Vec::new();
+    let mut sys_role_user_list: Vec<SysUserRole> = Vec::new();
     for role_id in role_ids {
-        sys_role_user_list.push(SysRoleUser {
+        let r_id = role_id.clone();
+        sys_role_user_list.push(SysUserRole {
             id: None,
-            gmt_create: Some(FastDateTime::now()),
-            gmt_modified: Some(FastDateTime::now()),
-            status_id: Some(1),
-            sort: Some(1),
-            role_id: Some(*role_id),
-            user_id: Some(user_id),
+            create_time: Some(DateTime::now()),
+            update_time: Some(DateTime::now()),
+            status_id: 1,
+            sort: 1,
+            role_id: r_id,
+            user_id: user_id.clone(),
         })
     }
 
-    let result = SysRoleUser::insert_batch(&mut rb, &sys_role_user_list, len as u64).await;
+    let result = SysUserRole::insert_batch(&mut rb, &sys_role_user_list, len as u64).await;
 
     return Ok(web::Json(handle_result(result)));
 }
@@ -216,47 +220,116 @@ pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> Res
 
     let mut rb = &data.batis;
 
-    let sys_user = SysUser::select_by_column(&mut rb, "id", "1").await;
+    //根据id查询用户
+    let result = SysUser::select_by_id(&mut rb, jwt_token.id).await;
 
-    let data = SysMenu::select_page(&mut rb, &PageRequest::new(1, 1000)).await;
+    match result {
+        Ok(sys_user) => {
+            match sys_user {
+                // 用户不存在的情况
+                None => {
+                    Ok(web::Json(BaseResponse {
+                        msg: "用户不存在".to_string(),
+                        code: 1,
+                        data: None,
+                    }))
+                }
+                Some(user) => {
+                    let user_role = SysUserRole::select_by_column(&mut rb, "user_id", user.id).await;
+                    // 判断是不是超级管理员
+                    let mut is_admin = false;
 
-    let mut sys_menu: Vec<MenuUserList> = Vec::new();
-    let mut btn_menu: Vec<String> = Vec::new();
-    let mut btn_menu_str: String = String::new();
+                    for x in user_role.unwrap() {
+                        if x.role_id == 1 {
+                            is_admin = true;
+                            break;
+                        }
+                    }
 
-    for x in data.unwrap().records {
-        let y = x.clone();
-        if y.menu_type != Some(3) {
-            sys_menu.push(MenuUserList {
-                id: y.id.unwrap(),
-                parent_id: y.parent_id.unwrap(),
-                name: y.menu_name.unwrap_or_default(),
-                icon: y.menu_icon.unwrap_or_default(),
-                api_url: y.api_url.as_ref().unwrap().to_string(),
-                menu_type: y.menu_type.unwrap(),
-                path: y.menu_url.unwrap_or_default(),
-            });
+                    let sys_menu_list: Vec<SysMenu>;
+
+                    if is_admin {
+                        sys_menu_list = SysMenu::select_all(&mut rb).await.unwrap_or_default();
+                    } else {
+                        sys_menu_list = rb.query_decode("select u.* from sys_user_role t left join sys_role usr on t.role_id = usr.id left join sys_role_menu srm on usr.id = srm.role_id left join sys_menu u on srm.menu_id = u.id where t.user_id = ? order by u.id asc", vec![to_value!(user.id)]).await.unwrap();
+                    }
+
+                    let mut sys_menu_map: HashMap<i32, MenuUserList> = HashMap::new();
+                    let mut sys_menu: Vec<MenuUserList> = Vec::new();
+                    let mut btn_menu: Vec<String> = Vec::new();
+                    let mut sys_menu_parent_ids: Vec<i32> = Vec::new();
+
+                    for x in sys_menu_list {
+                        let y = x.clone();
+                        if y.menu_type != 3 {
+                            sys_menu_map.insert(y.id.unwrap(), MenuUserList {
+                                id: y.id.unwrap(),
+                                parent_id: y.parent_id,
+                                name: y.menu_name,
+                                icon: y.menu_icon.unwrap_or_default(),
+                                api_url: y.api_url.as_ref().unwrap().to_string(),
+                                menu_type: y.menu_type,
+                                path: y.menu_url.unwrap_or_default(),
+                            });
+                            sys_menu_parent_ids.push(y.parent_id.clone())
+                        }
+
+                        btn_menu.push(x.api_url.unwrap_or_default());
+                    }
+
+                    for menu_id in sys_menu_parent_ids {
+                        let s_menu_result = SysMenu::select_by_id(&mut rb, menu_id).await.unwrap();
+                        match s_menu_result {
+                            None => {}
+                            Some(y) => {
+                                sys_menu_map.insert(y.id.unwrap(), MenuUserList {
+                                    id: y.id.unwrap(),
+                                    parent_id: y.parent_id,
+                                    name: y.menu_name,
+                                    icon: y.menu_icon.unwrap_or_default(),
+                                    api_url: y.api_url.as_ref().unwrap().to_string(),
+                                    menu_type: y.menu_type,
+                                    path: y.menu_url.unwrap_or_default(),
+                                });
+                            }
+                        }
+                    }
+
+                    let mut sys_menu_ids: Vec<i32> = Vec::new();
+                    for menu in &sys_menu_map {
+                        sys_menu_ids.push(menu.0.abs())
+                    }
+
+                    sys_menu_ids.sort();
+
+                    for id in sys_menu_ids {
+                        let menu = sys_menu_map.get(&id).cloned().unwrap();
+                        sys_menu.push(menu)
+                    }
+
+                    let resp = BaseResponse {
+                        msg: "successful".to_string(),
+                        code: 0,
+                        data: Some(QueryUserMenuData {
+                            sys_menu,
+                            btn_menu,
+                            avatar: "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png".to_string(),
+                            name: user.user_name,
+                        }),
+                    };
+                    Ok(web::Json(resp))
+                }
+            }
         }
-
-        btn_menu.push(x.api_url.unwrap_or_default());
-        btn_menu_str.push_str(&x.menu_name.unwrap_or_default());
-        btn_menu_str.push_str(&",")
+        // 查询用户数据库异常
+        Err(err) => {
+            Ok(web::Json(BaseResponse {
+                msg: err.to_string(),
+                code: 1,
+                data: None,
+            }))
+        }
     }
-
-    let mut redis_con = init_redis().await;
-    let _: () = redis_con.set("btn_menu_str", btn_menu_str).expect("sdfs");
-
-    let resp = BaseResponse {
-        msg: "successful".to_string(),
-        code: 0,
-        data: Some(QueryUserMenuData {
-            sys_menu,
-            btn_menu,
-            avatar: "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png".to_string(),
-            name: sys_user.unwrap_or_default().get(0).unwrap().real_name.as_ref().expect("用户名不存在").to_string(),
-        }),
-    };
-    Ok(web::Json(resp))
 }
 
 
@@ -268,35 +341,31 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
     let mobile = item.mobile.as_deref().unwrap_or_default();
     let status_id = item.status_id.as_deref().unwrap_or_default();
 
-    let page = &PageRequest::new(item.page_no, item.page_size);
+    let page = &PageRequest::new(item.page_no.clone(), item.page_size.clone());
     let result = SysUser::select_page_by_name(&mut rb, page, mobile, status_id).await;
 
     let resp = match result {
         Ok(d) => {
             let total = d.total;
-            let page_no = d.page_no;
-            let page_size = d.page_size;
 
             let mut user_list: Vec<UserListData> = Vec::new();
 
             for x in d.records {
                 user_list.push(UserListData {
                     id: x.id.unwrap(),
-                    sort: x.sort.unwrap(),
-                    status_id: x.status_id.unwrap(),
-                    mobile: x.mobile.unwrap_or_default(),
-                    real_name: x.real_name.unwrap_or_default(),
+                    sort: x.sort,
+                    status_id: x.status_id,
+                    mobile: x.mobile,
+                    user_name: x.user_name,
                     remark: x.remark.unwrap_or_default(),
-                    create_time: x.gmt_create.unwrap().0.to_string(),
-                    update_time: x.gmt_modified.unwrap().0.to_string(),
+                    create_time: x.create_time.unwrap().0.to_string(),
+                    update_time: x.update_time.unwrap().0.to_string(),
                 })
             }
 
             UserListResp {
                 msg: "successful".to_string(),
                 code: 0,
-                page_no,
-                page_size,
                 success: true,
                 total,
                 data: Some(user_list),
@@ -306,8 +375,6 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
             UserListResp {
                 msg: err.to_string(),
                 code: 1,
-                page_no: 0,
-                page_size: 0,
                 success: true,
                 total: 0,
                 data: None,
@@ -328,15 +395,14 @@ pub async fn user_save(item: web::Json<UserSaveReq>, data: web::Data<AppState>) 
     let mut rb = &data.batis;
     let sys_user = SysUser {
         id: None,
-        gmt_create: Some(FastDateTime::now()),
-        gmt_modified: Some(FastDateTime::now()),
-        status_id: Some(1),
-        sort: Some(1),
-        user_no: Some(1),
-        mobile: Some(user.mobile),
-        real_name: Some(user.real_name),
-        remark: Some(user.remark),
-        password: Some("123456".to_string()),
+        create_time: Some(DateTime::now()),
+        update_time: Some(DateTime::now()),
+        status_id: user.status_id,
+        sort: user.sort,
+        mobile: user.mobile,
+        user_name: user.user_name,
+        remark: user.remark,
+        password: "123456".to_string(),//默认密码为123456,暂时不加密
     };
 
     let result = SysUser::insert(&mut rb, &sys_user).await;
@@ -350,24 +416,36 @@ pub async fn user_update(item: web::Json<UserUpdateReq>, data: web::Data<AppStat
     log::info!("user_update params: {:?}", &item);
 
     let user = item.0;
-
     let mut rb = &data.batis;
-    let sys_user = SysUser {
-        id: Some(user.id),
-        gmt_create: None,
-        gmt_modified: Some(FastDateTime::now()),
-        status_id: Some(user.status_id),
-        sort: Some(user.sort),
-        user_no: None,
-        mobile: Some(user.mobile),
-        real_name: Some(user.real_name),
-        remark: Some(user.remark),
-        password: None,
-    };
 
-    let result = SysUser::update_by_column(&mut rb, &sys_user, "id").await;
+    let result = SysUser::select_by_id(&mut rb, user.id.clone()).await.unwrap();
 
-    Ok(web::Json(handle_result(result)))
+    match result {
+        None => {
+            Ok(web::Json(BaseResponse {
+                msg: "用户不存在".to_string(),
+                code: 1,
+                data: Some("None".to_string()),
+            }))
+        }
+        Some(s_user) => {
+            let sys_user = SysUser {
+                id: Some(user.id),
+                create_time: s_user.create_time,
+                update_time: Some(DateTime::now()),
+                status_id: user.status_id,
+                sort: user.sort,
+                mobile: user.mobile,
+                user_name: user.user_name,
+                remark: user.remark,
+                password: s_user.password,
+            };
+
+            let result = SysUser::update_by_column(&mut rb, &sys_user, "id").await;
+
+            Ok(web::Json(handle_result(result)))
+        }
+    }
 }
 
 
@@ -389,12 +467,12 @@ pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>, data: web::
 
     let mut rb = &data.batis;
 
-    let user_result = SysUser::select_by_id(&mut rb, &user_pwd.id).await;
+    let user_result = SysUser::select_by_id(&mut rb, user_pwd.id).await;
 
     match user_result {
         Ok(user) => {
             let mut sys_user = user.unwrap();
-            sys_user.password = Some(user_pwd.re_pwd);
+            sys_user.password = user_pwd.re_pwd;
             let result = SysUser::update_by_column(&mut rb, &sys_user, "id").await;
 
             Ok(web::Json(handle_result(result)))

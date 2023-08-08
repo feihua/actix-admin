@@ -7,7 +7,7 @@ pub mod handler;
 pub mod utils;
 
 use actix_web::{App, get, HttpResponse, HttpServer, middleware, Responder, web};
-use rbatis::Rbatis;
+use rbatis::RBatis;
 use crate::handler::{menu_handler, role_handler, user_handler};
 use tracing_actix_web::TracingLogger;
 use crate::model::db::init_db;
@@ -24,7 +24,7 @@ async fn index() -> impl Responder {
 // This struct represents state
 pub struct AppState {
     pub app_name: String,
-    pub batis: Rbatis,
+    pub batis: RBatis,
 }
 
 #[actix_web::main] // or #[tokio::main]
