@@ -1,5 +1,5 @@
 [package]
-name = "rust-admin"
+name = "actix-admin"
 version = "0.1.0"
 edition = "2021"
 
