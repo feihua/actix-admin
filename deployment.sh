@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cargo build -r actix
+cargo build -r
 
 #停止服务
 docker stop actix-admin
