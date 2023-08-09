@@ -3,6 +3,29 @@
 version = 3
 
 [[package]]
+name = "actix-admin"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "futures",
+ "futures-util",
+ "json",
+ "jsonwebtoken",
+ "log",
+ "log4rs",
+ "rbatis",
+ "rbdc-mysql",
+ "rbs",
+ "redis",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+ "tracing-actix-web",
+ "validator",
+]
+
+[[package]]
 name = "actix-codec"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1683,29 +1706,6 @@ dependencies = [
  "spki",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "rust-admin"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "futures",
- "futures-util",
- "json",
- "jsonwebtoken",
- "log",
- "log4rs",
- "rbatis",
- "rbdc-mysql",
- "rbs",
- "redis",
- "serde",
- "serde_json",
- "thiserror",
- "tracing",
- "tracing-actix-web",
- "validator",
 ]
 
 [[package]]

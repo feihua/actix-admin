@@ -14,6 +14,7 @@ use crate::vo::user_vo::*;
 use crate::utils::jwt_util::JWTToken;
 use crate::vo::{BaseResponse, handle_result};
 
+// 后台用户登录
 #[post("/login")]
 pub async fn login(item: web::Json<UserLoginReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("user login params: {:?}, {:?}", &item, data.batis);
@@ -332,7 +333,7 @@ pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> Res
     }
 }
 
-
+// 查询用户列表
 #[post("/user_list")]
 pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("query user_list params: {:?}", &item);
@@ -341,25 +342,25 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
     let mobile = item.mobile.as_deref().unwrap_or_default();
     let status_id = item.status_id.as_deref().unwrap_or_default();
 
-    let page = &PageRequest::new(item.page_no.clone(), item.page_size.clone());
-    let result = SysUser::select_page_by_name(&mut rb, page, mobile, status_id).await;
+    let page_req = &PageRequest::new(item.page_no.clone(), item.page_size.clone());
+    let result = SysUser::select_page_by_name(&mut rb, page_req, mobile, status_id).await;
 
     let resp = match result {
-        Ok(d) => {
-            let total = d.total;
+        Ok(page) => {
+            let total = page.total;
 
-            let mut user_list: Vec<UserListData> = Vec::new();
+            let mut list_data: Vec<UserListData> = Vec::new();
 
-            for x in d.records {
-                user_list.push(UserListData {
-                    id: x.id.unwrap(),
-                    sort: x.sort,
-                    status_id: x.status_id,
-                    mobile: x.mobile,
-                    user_name: x.user_name,
-                    remark: x.remark.unwrap_or_default(),
-                    create_time: x.create_time.unwrap().0.to_string(),
-                    update_time: x.update_time.unwrap().0.to_string(),
+            for user in page.records {
+                list_data.push(UserListData {
+                    id: user.id.unwrap(),
+                    sort: user.sort,
+                    status_id: user.status_id,
+                    mobile: user.mobile,
+                    user_name: user.user_name,
+                    remark: user.remark.unwrap_or_default(),
+                    create_time: user.create_time.unwrap().0.to_string(),
+                    update_time: user.update_time.unwrap().0.to_string(),
                 })
             }
 
@@ -368,7 +369,7 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
                 code: 0,
                 success: true,
                 total,
-                data: Some(user_list),
+                data: Some(list_data),
             }
         }
         Err(err) => {
@@ -385,7 +386,7 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
     Ok(web::Json(resp))
 }
 
-
+// 添加用户信息
 #[post("/user_save")]
 pub async fn user_save(item: web::Json<UserSaveReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("user_save params: {:?}", &item);
@@ -410,7 +411,7 @@ pub async fn user_save(item: web::Json<UserSaveReq>, data: web::Data<AppState>) 
     Ok(web::Json(handle_result(result)))
 }
 
-
+// 更新用户信息
 #[post("/user_update")]
 pub async fn user_update(item: web::Json<UserUpdateReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("user_update params: {:?}", &item);
@@ -448,7 +449,7 @@ pub async fn user_update(item: web::Json<UserUpdateReq>, data: web::Data<AppStat
     }
 }
 
-
+// 删除用户信息
 #[post("/user_delete")]
 pub async fn user_delete(item: web::Json<UserDeleteReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("user_delete params: {:?}", &item);
@@ -459,6 +460,7 @@ pub async fn user_delete(item: web::Json<UserDeleteReq>, data: web::Data<AppStat
     Ok(web::Json(handle_result(result)))
 }
 
+// 更新用户密码
 #[post("/update_user_password")]
 pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("update_user_pwd params: {:?}", &item);
@@ -467,15 +469,35 @@ pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>, data: web::
 
     let mut rb = &data.batis;
 
-    let user_result = SysUser::select_by_id(&mut rb, user_pwd.id).await;
+    let sys_user_result = SysUser::select_by_id(&mut rb, user_pwd.id).await;
 
-    match user_result {
-        Ok(user) => {
-            let mut sys_user = user.unwrap();
-            sys_user.password = user_pwd.re_pwd;
-            let result = SysUser::update_by_column(&mut rb, &sys_user, "id").await;
+    match sys_user_result {
+        Ok(user_result) => {
+            match user_result {
+                None => {
+                    let resp = BaseResponse {
+                        msg: "用户不存在".to_string(),
+                        code: 1,
+                        data: None,
+                    };
+                    Ok(web::Json(resp))
+                }
+                Some(mut user) => {
+                    if user.password == user_pwd.pwd {
+                        user.password = user_pwd.re_pwd;
+                        let result = SysUser::update_by_column(&mut rb, &user, "id").await;
 
-            Ok(web::Json(handle_result(result)))
+                        Ok(web::Json(handle_result(result)))
+                    } else {
+                        let resp = BaseResponse {
+                            msg: "旧密码不正确".to_string(),
+                            code: 1,
+                            data: None,
+                        };
+                        Ok(web::Json(resp))
+                    }
+                }
+            }
         }
         Err(err) => {
             let resp = BaseResponse {
