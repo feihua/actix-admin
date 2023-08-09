@@ -12,7 +12,7 @@ use crate::model::user_role::{SysUserRole};
 use crate::utils::error::WhoUnfollowedError;
 use crate::vo::user_vo::*;
 use crate::utils::jwt_util::JWTToken;
-use crate::vo::{BaseResponse, handle_result};
+use crate::vo::{BaseResponse, err_result_msg, err_result_page, handle_result, ok_result_msg, ok_result_page};
 
 // 后台用户登录
 #[post("/login")]
@@ -345,11 +345,10 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
     let page_req = &PageRequest::new(item.page_no.clone(), item.page_size.clone());
     let result = SysUser::select_page_by_name(&mut rb, page_req, mobile, status_id).await;
 
-    let resp = match result {
+    let mut list_data: Vec<UserListData> = Vec::new();
+    match result {
         Ok(page) => {
             let total = page.total;
-
-            let mut list_data: Vec<UserListData> = Vec::new();
 
             for user in page.records {
                 list_data.push(UserListData {
@@ -364,26 +363,12 @@ pub async fn user_list(item: web::Json<UserListReq>, data: web::Data<AppState>) 
                 })
             }
 
-            UserListResp {
-                msg: "successful".to_string(),
-                code: 0,
-                success: true,
-                total,
-                data: Some(list_data),
-            }
+            Ok(web::Json(ok_result_page(list_data, total)))
         }
         Err(err) => {
-            UserListResp {
-                msg: err.to_string(),
-                code: 1,
-                success: true,
-                total: 0,
-                data: None,
-            }
+            Ok(web::Json(err_result_page(list_data, err.to_string())))
         }
-    };
-
-    Ok(web::Json(resp))
+    }
 }
 
 // 添加用户信息
@@ -423,11 +408,7 @@ pub async fn user_update(item: web::Json<UserUpdateReq>, data: web::Data<AppStat
 
     match result {
         None => {
-            Ok(web::Json(BaseResponse {
-                msg: "用户不存在".to_string(),
-                code: 1,
-                data: Some("None".to_string()),
-            }))
+            Ok(web::Json(err_result_msg("用户不存在".to_string())))
         }
         Some(s_user) => {
             let sys_user = SysUser {
@@ -455,9 +436,14 @@ pub async fn user_delete(item: web::Json<UserDeleteReq>, data: web::Data<AppStat
     log::info!("user_delete params: {:?}", &item);
     let mut rb = &data.batis;
 
-    let result = SysUser::delete_in_column(&mut rb, "id", &item.ids).await;
+    let ids = item.ids.clone();
+    for id in ids {
+        if id != 1 {//id为1的用户为系统预留用户,不能删除
+            let _ = SysUser::delete_by_column(&mut rb, "id", &id).await;
+        }
+    }
 
-    Ok(web::Json(handle_result(result)))
+    Ok(web::Json(ok_result_msg("删除用户信息成功".to_string())))
 }
 
 // 更新用户密码
@@ -475,12 +461,7 @@ pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>, data: web::
         Ok(user_result) => {
             match user_result {
                 None => {
-                    let resp = BaseResponse {
-                        msg: "用户不存在".to_string(),
-                        code: 1,
-                        data: None,
-                    };
-                    Ok(web::Json(resp))
+                    Ok(web::Json(err_result_msg("用户不存在".to_string())))
                 }
                 Some(mut user) => {
                     if user.password == user_pwd.pwd {
@@ -489,23 +470,13 @@ pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>, data: web::
 
                         Ok(web::Json(handle_result(result)))
                     } else {
-                        let resp = BaseResponse {
-                            msg: "旧密码不正确".to_string(),
-                            code: 1,
-                            data: None,
-                        };
-                        Ok(web::Json(resp))
+                        Ok(web::Json(err_result_msg("旧密码不正确".to_string())))
                     }
                 }
             }
         }
         Err(err) => {
-            let resp = BaseResponse {
-                msg: err.to_string(),
-                code: 1,
-                data: None,
-            };
-            Ok(web::Json(resp))
+            Ok(web::Json(err_result_msg(err.to_string())))
         }
     }
 }

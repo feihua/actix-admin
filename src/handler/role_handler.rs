@@ -6,7 +6,7 @@ use crate::model::role::{SysRole};
 use crate::model::menu::{SysMenu};
 use crate::model::role_menu::{query_menu_by_role, SysRoleMenu};
 use crate::model::user_role::SysUserRole;
-use crate::vo::{BaseResponse, handle_result};
+use crate::vo::{err_result_msg, err_result_page, handle_result, ok_result_data, ok_result_page};
 use crate::vo::role_vo::*;
 
 // 查询角色列表
@@ -21,11 +21,10 @@ pub async fn role_list(item: web::Json<RoleListReq>, data: web::Data<AppState>) 
     let page_req = &PageRequest::new(item.page_no.clone(), item.page_size.clone());
     let result = SysRole::select_page_by_name(&mut rb, page_req, &role_name, &status_id).await;
 
+    let mut role_list: Vec<RoleListData> = Vec::new();
     match result {
         Ok(page) => {
             let total = page.total;
-
-            let mut role_list: Vec<RoleListData> = Vec::new();
 
             for role in page.records {
                 role_list.push(RoleListData {
@@ -39,22 +38,10 @@ pub async fn role_list(item: web::Json<RoleListReq>, data: web::Data<AppState>) 
                 })
             }
 
-            Ok(web::Json(RoleListResp {
-                msg: "查询角色列表成功".to_string(),
-                code: 0,
-                success: true,
-                total,
-                data: Some(role_list),
-            }))
+            Ok(web::Json(ok_result_page(role_list, total)))
         }
         Err(err) => {
-            Ok(web::Json(RoleListResp {
-                msg: err.to_string(),
-                code: 1,
-                success: true,
-                total: 0,
-                data: None,
-            }))
+            Ok(web::Json(err_result_page(role_list, err.to_string())))
         }
     }
 }
@@ -115,11 +102,7 @@ pub async fn role_delete(item: web::Json<RoleDeleteReq>, data: web::Data<AppStat
     let user_role_list = SysUserRole::select_in_column(&mut rb, "role_id", &ids).await.unwrap_or_default();
 
     if user_role_list.len() > 0 {
-        return Ok(web::Json(BaseResponse {
-            msg: "角色已被使用,不能直接删除".to_string(),
-            code: 1,
-            data: Some("None".to_string()),
-        }));
+        return Ok(web::Json(err_result_msg("角色已被使用,不能直接删除".to_string())));
     }
 
     let result = SysRole::delete_in_column(&mut rb, "id", &item.ids).await;
@@ -163,14 +146,10 @@ pub async fn query_role_menu(item: web::Json<QueryRoleMenuReq>, data: web::Data<
         }
     }
 
-    Ok(web::Json(QueryRoleMenuResp {
-        msg: "successful".to_string(),
-        code: 0,
-        data: QueryRoleMenuData {
-            role_menus: role_menu_ids,
-            menu_list: menu_data_list,
-        },
-    }))
+    Ok(web::Json(ok_result_data(QueryRoleMenuData {
+        role_menus: role_menu_ids,
+        menu_list: menu_data_list,
+    })))
 }
 
 // 更新角色关联的菜单
@@ -205,11 +184,7 @@ pub async fn update_role_menu(item: web::Json<UpdateRoleMenuReq>, data: web::Dat
             Ok(web::Json(handle_result(result)))
         }
         Err(err) => {
-            Ok(web::Json(BaseResponse {
-                msg: err.to_string(),
-                code: 1,
-                data: Some("None".to_string()),
-            })
+            Ok(web::Json(err_result_msg(err.to_string()))
             )
         }
     }
