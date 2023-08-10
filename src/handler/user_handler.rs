@@ -1,18 +1,20 @@
 use std::collections::HashMap;
-use actix_web::{HttpRequest, post, get, Responder, Result, web};
+
+use actix_web::{get, HttpRequest, post, Responder, Result, web};
 use actix_web::http::header;
 use rbatis::rbdc::datetime::DateTime;
-use rbatis::sql::{PageRequest};
+use rbatis::sql::PageRequest;
 use rbs::to_value;
+
 use crate::AppState;
-use crate::model::user::{SysUser};
-use crate::model::menu::{SysMenu};
-use crate::model::role::{SysRole};
-use crate::model::user_role::{SysUserRole};
+use crate::model::menu::SysMenu;
+use crate::model::role::SysRole;
+use crate::model::user::SysUser;
+use crate::model::user_role::SysUserRole;
 use crate::utils::error::WhoUnfollowedError;
-use crate::vo::user_vo::*;
 use crate::utils::jwt_util::JWTToken;
-use crate::vo::{BaseResponse, err_result_msg, err_result_page, handle_result, ok_result_msg, ok_result_page};
+use crate::vo::{BaseResponse, err_result_msg, err_result_page, handle_result, ok_result_data, ok_result_msg, ok_result_page};
+use crate::vo::user_vo::*;
 
 // 后台用户登录
 #[post("/login")]
@@ -20,80 +22,83 @@ pub async fn login(item: web::Json<UserLoginReq>, data: web::Data<AppState>) -> 
     log::info!("user login params: {:?}, {:?}", &item, data.batis);
     let mut rb = &data.batis;
 
-    let user_result = SysUser::select_by_column(&mut rb, "mobile", &item.mobile).await;
-    log::info!("select_by_column: {:?}",user_result);
+    let user_result = SysUser::select_by_mobile(&mut rb, &item.mobile).await;
+    log::info!("select_by_mobile: {:?}",user_result);
 
     match user_result {
-        Ok(d) => {
-            if d.len() == 0 {
-                let resp = BaseResponse {
-                    msg: "用户不存在".to_string(),
-                    code: 1,
-                    data: None,
-                };
-                return Ok(web::Json(resp));
-            }
-
-            let user = d.get(0).unwrap().clone();
-            let id = user.id.unwrap();
-            let username = user.user_name;
-            let password = user.password;
-
-            if password.ne(&item.password) {
-                let resp = BaseResponse {
-                    msg: "密码不正确".to_string(),
-                    code: 1,
-                    data: None,
-                };
-                return Ok(web::Json(resp));
-            }
-
-            let data = SysMenu::select_page(&mut rb, &PageRequest::new(1, 1000)).await;
-
-            let mut btn_menu: Vec<String> = Vec::new();
-
-            for x in data.unwrap().records {
-                btn_menu.push(x.api_url.unwrap_or_default());
-            }
-
-            match JWTToken::new(id, &username, btn_menu).create_token("123") {
-                Ok(token) => {
-                    let resp = BaseResponse {
-                        msg: "successful".to_string(),
-                        code: 0,
-                        data: Some(UserLoginData {
-                            mobile: item.mobile.to_string(),
-                            token,
-                        }),
-                    };
-
-                    Ok(web::Json(resp))
+        Ok(u) => {
+            match u {
+                None => {
+                    return Ok(web::Json(err_result_msg("用户不存在".to_string())));
                 }
-                Err(err) => {
-                    let er = match err {
-                        WhoUnfollowedError::JwtTokenError(s) => { s }
-                        _ => "no math error".to_string()
-                    };
-                    let resp = BaseResponse {
-                        msg: er,
-                        code: 1,
-                        data: None,
-                    };
+                Some(user) => {
+                    let id = user.id.unwrap();
+                    let username = user.user_name;
+                    let password = user.password;
 
-                    Ok(web::Json(resp))
+                    if password.ne(&item.password) {
+                        return Ok(web::Json(err_result_msg("密码不正确".to_string())));
+                    }
+
+                    let btn_menu = query_btn_menu(&id, data).await;
+
+                    if btn_menu.len() == 0 {
+                        return Ok(web::Json(err_result_msg("用户没有分配角色或者菜单,不能登录".to_string())));
+                    }
+
+                    match JWTToken::new(id, &username, btn_menu).create_token("123") {
+                        Ok(token) => {
+                            Ok(web::Json(ok_result_data(token)))
+                        }
+                        Err(err) => {
+                            let er = match err {
+                                WhoUnfollowedError::JwtTokenError(s) => { s }
+                                _ => "no math error".to_string()
+                            };
+
+                            Ok(web::Json(err_result_msg(er)))
+                        }
+                    }
                 }
             }
         }
 
         Err(err) => {
             log::info!("select_by_column: {:?}",err);
-            let resp = BaseResponse {
-                msg: "查询用户异常".to_string(),
-                code: 1,
-                data: None,
-            };
-            return Ok(web::Json(resp));
+            return Ok(web::Json(err_result_msg("查询用户异常".to_string())));
         }
+    }
+}
+
+async fn query_btn_menu(id: &i32, data: web::Data<AppState>) -> Vec<String> {
+    let mut rb = &data.batis;
+    let user_role = SysUserRole::select_by_column(&mut rb, "user_id", id.clone()).await;
+    // 判断是不是超级管理员
+    let mut is_admin = false;
+
+    for x in user_role.unwrap() {
+        if x.role_id == 1 {
+            is_admin = true;
+            break;
+        }
+    }
+
+    let mut btn_menu: Vec<String> = Vec::new();
+    if is_admin {
+        let data = SysMenu::select_all(&mut rb).await;
+
+        for x in data.unwrap() {
+            btn_menu.push(x.api_url.unwrap_or_default());
+        }
+        log::info!("admin login: {:?}",id);
+        btn_menu
+    } else {
+        let btn_menu_map: Vec<HashMap<String, String>> = rb.query_decode("select distinct u.api_url from sys_user_role t left join sys_role usr on t.role_id = usr.id left join sys_role_menu srm on usr.id = srm.role_id left join sys_menu u on srm.menu_id = u.id where t.user_id = ?", vec![to_value!(id)]).await.unwrap();
+        for x in btn_menu_map {
+            btn_menu.push(x.get("api_url").unwrap().to_string());
+        }
+        log::info!("ordinary login: {:?}",id);
+        btn_menu
     }
 }
 
@@ -102,12 +107,18 @@ pub async fn query_user_role(item: web::Json<QueryUserRoleReq>, data: web::Data<
     log::info!("query_user_role params: {:?}", item);
     let mut rb = &data.batis;
 
-    let sys_role = SysRole::select_page(&mut rb, &PageRequest::new(1, 1000)).await;
-
-    let mut sys_role_list: Vec<UserRoleList> = Vec::new();
+    let user_role = SysUserRole::select_by_column(&mut rb, "user_id", item.user_id).await;
     let mut user_role_ids: Vec<i32> = Vec::new();
 
-    for x in sys_role.unwrap().records {
+    for x in user_role.unwrap() {
+        user_role_ids.push(x.role_id);
+    }
+
+    let sys_role = SysRole::select_all(&mut rb).await;
+
+    let mut sys_role_list: Vec<UserRoleList> = Vec::new();
+
+    for x in sys_role.unwrap() {
         sys_role_list.push(UserRoleList {
             id: x.id.unwrap(),
             status_id: x.status_id,
@@ -117,20 +128,12 @@ pub async fn query_user_role(item: web::Json<QueryUserRoleReq>, data: web::Data<
             create_time: x.create_time.unwrap().0.to_string(),
             update_time: x.update_time.unwrap().0.to_string(),
         });
-
-        user_role_ids.push(x.id.unwrap_or_default());
     }
 
-    let resp = QueryUserRoleResp {
-        msg: "successful".to_string(),
-        code: 0,
-        data: QueryUserRoleData {
-            sys_role_list,
-            user_role_ids,
-        },
-    };
-
-    Ok(web::Json(resp))
+    Ok(web::Json(ok_result_data(QueryUserRoleData {
+        sys_role_list,
+        user_role_ids,
+    })))
 }
 
 #[post("/update_user_role")]
@@ -144,23 +147,13 @@ pub async fn update_user_role(item: web::Json<UpdateUserRoleReq>, data: web::Dat
     let len = user_role.role_ids.len();
 
     if user_id == 1 {
-        let resp = BaseResponse {
-            msg: "不能修改超级管理员的角色".to_string(),
-            code: 1,
-            data: None,
-        };
-        return Ok(web::Json(resp));
+        return Ok(web::Json(err_result_msg("不能修改超级管理员的角色".to_string())));
     }
 
     let sys_result = SysUserRole::delete_by_column(&mut rb, "user_id", user_id).await;
 
     if sys_result.is_err() {
-        let resp = BaseResponse {
-            msg: "更新用户角色异常".to_string(),
-            code: 1,
-            data: None,
-        };
-        return Ok(web::Json(resp));
+        return Ok(web::Json(err_result_msg("更新用户角色异常".to_string())));
     }
 
     let mut sys_role_user_list: Vec<SysUserRole> = Vec::new();

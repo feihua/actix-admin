@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use validator::{Validate};
+use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserLoginReq {
@@ -7,30 +7,12 @@ pub struct UserLoginReq {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UserLoginResp {
-    pub msg: String,
-    pub code: i32,
-    pub data: Option<UserLoginData>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UserLoginData {
-    pub mobile: String,
-    pub token: String,
-}
 
 #[derive(Debug, Deserialize)]
 pub struct QueryUserRoleReq {
     pub user_id: i32,
 }
 
-#[derive(Debug, Serialize)]
-pub struct QueryUserRoleResp {
-    pub msg: String,
-    pub code: i32,
-    pub data: QueryUserRoleData,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryUserRoleData {
