@@ -1,32 +1,26 @@
-use std::collections::HashMap;
-use rbatis::rbdc::datetime::DateTime;
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use rbatis::rbatis::RBatis;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Selectable, Insertable, Debug, PartialEq, Serialize, Deserialize, QueryableByName, AsChangeset)]
+#[diesel(table_name = crate::schema::sys_role_menu)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct SysRoleMenu {
-    pub id: Option<i32>,
-    pub create_time: Option<DateTime>,
-    pub update_time: Option<DateTime>,
-    pub status_id: i32,
+    pub id: i64,
+    pub role_id: i64,
+    pub menu_id: i64,
+    pub status_id: i8,
     pub sort: i32,
-    pub menu_id: i32,
-    pub role_id: i32,
-
+    pub create_time: NaiveDateTime,
+    pub update_time: NaiveDateTime,
 }
 
-rbatis::crud!(SysRoleMenu {});
-impl_select_page!(SysRoleMenu{select_page() =>"
-     if !sql.contains('count'):
-       order by create_time desc"});
-
-impl_select_page!(SysRoleMenu{select_page_by_name(name:&str) =>"
-     if name != null && name != '':
-       where user_name != #{name}
-     if name == '':
-       where user_name != ''"});
-
-#[sql("select menu_id from sys_role_menu where role_id = ?")]
-pub async fn query_menu_by_role(rb: &RBatis, role_id: i32) -> rbatis::Result<Vec<HashMap<String, i32>>> {
-    impled!()
+#[derive(Insertable, Debug, PartialEq, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::sys_role_menu)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct SysRoleMenuAdd {
+    pub role_id: i64,
+    pub menu_id: i64,
+    pub status_id: i8,
+    pub sort: i32,
 }

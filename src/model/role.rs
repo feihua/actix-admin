@@ -1,28 +1,37 @@
-use rbatis::rbdc::datetime::DateTime;
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Selectable, Insertable, Debug, PartialEq, Serialize, Deserialize, QueryableByName, AsChangeset)]
+#[diesel(table_name = crate::schema::sys_role)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct SysRole {
-    pub id: Option<i32>,
-    pub create_time: Option<DateTime>,
-    pub update_time: Option<DateTime>,
-    pub status_id: i32,
-    pub sort: i32,
+    pub id: i64,
     pub role_name: String,
-    pub remark: Option<String>,
-
+    pub status_id: i8,
+    pub sort: i32,
+    pub remark: String,
+    pub create_time: NaiveDateTime,
+    pub update_time: NaiveDateTime,
 }
 
-rbatis::crud!(SysRole {});
-impl_select_page!(SysRole{select_page() =>"
-     if !sql.contains('count'):
-       order by create_time desc"});
+#[derive(Insertable, Debug, PartialEq, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::sys_role)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct SysRoleAdd {
+    pub role_name: String,
+    pub status_id: i8,
+    pub sort: i32,
+    pub remark: String,
+}
 
-impl_select_page!(SysRole{select_page_by_name(role_name:&str,status_id:&str) =>"
-      where 1=1
-     if role_name != null && role_name != '':
-       ` and role_name = #{role_name} `
-     if status_id != null && status_id != '':
-       ` and status_id = #{status_id} `
-     if !sql.contains('count'):
-        ` order by create_time desc `"});
+#[derive(Debug, PartialEq, Serialize, Deserialize, AsChangeset)]
+#[diesel(table_name = crate::schema::sys_role)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct SysRoleUpdate {
+    pub id: i64,
+    pub role_name: String,
+    pub status_id: i8,
+    pub sort: i32,
+    pub remark: String,
+}

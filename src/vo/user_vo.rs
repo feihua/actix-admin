@@ -10,20 +10,20 @@ pub struct UserLoginReq {
 
 #[derive(Debug, Deserialize)]
 pub struct QueryUserRoleReq {
-    pub user_id: i32,
+    pub user_id: i64,
 }
 
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryUserRoleData {
     pub sys_role_list: Vec<UserRoleList>,
-    pub user_role_ids: Vec<i32>,
+    pub user_role_ids: Vec<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserRoleList {
-    pub id: i32,
-    pub status_id: i32,
+    pub id: i64,
+    pub status_id: i8,
     pub sort: i32,
     pub role_name: String,
     pub remark: String,
@@ -33,8 +33,8 @@ pub struct UserRoleList {
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateUserRoleReq {
-    pub user_id: i32,
-    pub role_ids: Vec<i32>,
+    pub user_id: i64,
+    pub role_ids: Vec<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,12 +60,12 @@ pub struct QueryUserMenuData {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MenuUserList {
-    pub id: i32,
-    pub parent_id: i32,
+    pub id: i64,
+    pub parent_id: i64,
     pub name: String,
     pub path: String,
     pub api_url: String,
-    pub menu_type: i32,
+    pub menu_type: i8,
     pub icon: String,
 }
 
@@ -77,7 +77,7 @@ pub struct UserListReq {
     #[serde(rename = "pageSize")]
     pub page_size: u64,
     pub mobile: Option<String>,
-    pub status_id: Option<String>,
+    pub status_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -91,7 +91,7 @@ pub struct UserListResp {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserListData {
-    pub id: i32,
+    pub id: i64,
     pub sort: i32,
     pub status_id: i32,
     pub mobile: String,
@@ -112,7 +112,7 @@ pub struct UserSaveReq {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserUpdateReq {
-    pub id: i32,
+    pub id: i64,
     pub sort: i32,
     pub status_id: i32,
     pub mobile: String,
@@ -122,12 +122,12 @@ pub struct UserUpdateReq {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserDeleteReq {
-    pub ids: Vec<i32>,
+    pub ids: Vec<i64>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateUserPwdReq {
-    pub id: i32,
+    pub id: i64,
     pub pwd: String,
     pub re_pwd: String,
 }

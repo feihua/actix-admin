@@ -1,26 +1,28 @@
-use rbatis::rbdc::datetime::DateTime;
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-// user_role
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Selectable, Insertable, Debug, PartialEq, Serialize, Deserialize, QueryableByName, AsChangeset)]
+#[diesel(table_name = crate::schema::sys_user_role)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct SysUserRole {
-    pub id: Option<i32>,
-    pub create_time: Option<DateTime>,
-    pub update_time: Option<DateTime>,
-    pub status_id: i32,
+    pub id: i64,
+    pub user_id: i64,
+    pub role_id: i64,
+    pub status_id: i8,
     pub sort: i32,
-    pub role_id: i32,
-    pub user_id: i32,
+    pub create_time: NaiveDateTime,
+    pub update_time: NaiveDateTime,
 
 }
 
-rbatis::crud!(SysUserRole {});
-impl_select_page!(SysUserRole{select_page() =>"
-     if !sql.contains('count'):
-       order by create_time desc"});
+#[derive(Insertable, Debug, PartialEq, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::sys_user_role)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct SysUserRoleAdd {
+    pub user_id: i64,
+    pub role_id: i64,
+    pub status_id: i8,
+    pub sort: i32,
 
-impl_select_page!(SysUserRole{select_page_by_name(name:&str) =>"
-     if name != null && name != '':
-       where user_name != #{name}
-     if name == '':
-       where user_name != ''"});
+}
