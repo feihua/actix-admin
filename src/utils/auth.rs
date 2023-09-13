@@ -2,12 +2,13 @@ use std::future::{ready, Ready};
 use std::rc::Rc;
 
 use actix_web::{dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}, Error};
+use actix_web::error;
 use actix_web::http::header;
 use futures_util::future::LocalBoxFuture;
-use crate::utils::jwt_util::JWTToken;
-use actix_web::{error};
 use serde_json::json;
+
 use crate::utils::error::WhoUnfollowedError;
+use crate::utils::jwt_util::JWTToken;
 
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with

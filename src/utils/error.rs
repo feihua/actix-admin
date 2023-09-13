@@ -1,4 +1,5 @@
 use thiserror::Error;
+
 #[derive(Error, Debug)]
 pub enum WhoUnfollowedError {
     // #[error("Failed to complete an HTTP request")]
@@ -12,7 +13,5 @@ pub enum WhoUnfollowedError {
 
     #[error("")]
     JwtTokenError(String),
-
-
 
 }

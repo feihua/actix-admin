@@ -1,12 +1,14 @@
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, errors::ErrorKind};
-use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use jsonwebtoken::{decode, DecodingKey, encode, EncodingKey, errors::ErrorKind, Header, Validation};
+use serde::{Deserialize, Serialize};
+
 use crate::utils::error::WhoUnfollowedError;
-use crate::utils::error::WhoUnfollowedError::{JwtTokenError};
+use crate::utils::error::WhoUnfollowedError::JwtTokenError;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JWTToken {
-    pub id: i32,
+    pub id: i64,
     pub username: String,
     pub permissions: Vec<String>,
     aud: String,
@@ -24,7 +26,7 @@ pub struct JWTToken {
 }
 
 impl JWTToken {
-    pub fn new(id: i32, username: &str, permissions: Vec<String>) -> JWTToken {
+    pub fn new(id: i64, username: &str, permissions: Vec<String>) -> JWTToken {
         let now = SystemTime::now();
         //过期时间
         let m30 = Duration::from_secs(1800000);
@@ -87,9 +89,8 @@ mod tests {
     fn test_jwt() {
         let jwt = JWTToken::new("1", "koobe", vec![]);
         let res = jwt.create_token("123")?;
-        println!("{:?}",res);
+        println!("{:?}", res);
         let token = JWTToken::verify("123", &res);
-        println!("{:?}",token)
-
+        println!("{:?}", token)
     }
 }
