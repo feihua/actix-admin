@@ -87,10 +87,17 @@ mod tests {
 
     #[test]
     fn test_jwt() {
-        let jwt = JWTToken::new("1", "koobe", vec![]);
-        let res = jwt.create_token("123")?;
-        println!("{:?}", res);
-        let token = JWTToken::verify("123", &res);
-        println!("{:?}", token)
+        let jwt = JWTToken::new(1, "koobe", vec![]);
+        let res = jwt.create_token("123");
+        match res {
+            Ok(token ) => {
+                let result = JWTToken::verify("123", &token);
+                println!("{:?}",result)
+            }
+            Err(err) => {
+                println!("{:?}",err)
+            }
+        }
+
     }
 }
