@@ -25,9 +25,9 @@ sea-orm = { version = "0.12.1", features = ["sqlx-mysql", "runtime-async-std-nat
 tracing-subscriber = "0.3.17"
 dotenvy = "0.15.7"
 
-jsonwebtoken = "8"
+jsonwebtoken = "9.3.0"
 
-redis = "0.23.1"
+redis = "0.25.3"
 
 futures = { version = "0.3", default-features = false }
 thiserror = "1.0"
