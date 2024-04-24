@@ -7,27 +7,27 @@ edition = "2021"
 
 [dependencies]
 actix-web = {version="4", default-features = false, features = ["macros"]}
-tracing-actix-web = "0.6"
+tracing-actix-web = "0.7.10"
 tracing = "0.1"
 futures-util = "0.3.25"
 
 json = "0.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-validator = { version = "0.16", features = ["derive"] }
+validator = { version = "0.18.1", features = ["derive"] }
 
 log = "0.4"
 log4rs = "1.0"
 #env_logger = "0.9"
 
-rbs = { version = "4.3"}
-rbatis = { version = "4.3"}
+rbs = { version = "4.5"}
+rbatis = { version = "4.5"}
 #rbatis = { version = "4.0",features = ["debug_mode"]}
-rbdc-mysql={version="4.3"}
+rbdc-mysql={version="4.5"}
 
-jsonwebtoken = "8"
+jsonwebtoken = "9.3.0"
 
-redis = "0.23.1"
+redis = "0.25.3"
 
 futures = { version = "0.3", default-features = false }
 thiserror = "1.0"

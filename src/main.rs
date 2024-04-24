@@ -65,7 +65,7 @@ async fn main() -> std::io::Result<()> {
                 .service(menu_handler::menu_delete)
                 .service(menu_handler::menu_update))
     })
-        .bind(("0.0.0.0", 8088))?
+        .bind(("0.0.0.0", 8788))?
         .run()
         .await
 }
