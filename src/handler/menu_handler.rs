@@ -10,10 +10,10 @@ use crate::vo::menu_vo::{*};
 #[post("/menu_list")]
 pub async fn menu_list(item: web::Json<MenuListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("menu_list params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     // 菜单是树形结构不需要分页
-    let result = SysMenu::select_all(&mut rb).await;
+    let result = SysMenu::select_all(rb).await;
 
     let mut menu_list: Vec<MenuListData> = Vec::new();
 
@@ -48,7 +48,7 @@ pub async fn menu_list(item: web::Json<MenuListReq>, data: web::Data<AppState>) 
 #[post("/menu_save")]
 pub async fn menu_save(item: web::Json<MenuSaveReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("menu_save params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     let menu = item.0;
 
@@ -67,7 +67,7 @@ pub async fn menu_save(item: web::Json<MenuSaveReq>, data: web::Data<AppState>) 
         menu_type: menu.menu_type,
     };
 
-    let result = SysMenu::insert(&mut rb, &sys_menu).await;
+    let result = SysMenu::insert(rb, &sys_menu).await;
 
     Ok(web::Json(handle_result(result)))
 }
@@ -76,7 +76,7 @@ pub async fn menu_save(item: web::Json<MenuSaveReq>, data: web::Data<AppState>) 
 #[post("/menu_update")]
 pub async fn menu_update(item: web::Json<MenuUpdateReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("menu_update params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
     let menu = item.0;
 
     let sys_menu = SysMenu {
@@ -94,7 +94,7 @@ pub async fn menu_update(item: web::Json<MenuUpdateReq>, data: web::Data<AppStat
         menu_type: menu.menu_type,
     };
 
-    let result = SysMenu::update_by_column(&mut rb, &sys_menu, "id").await;
+    let result = SysMenu::update_by_column(rb, &sys_menu, "id").await;
 
     Ok(web::Json(handle_result(result)))
 }
@@ -103,16 +103,16 @@ pub async fn menu_update(item: web::Json<MenuUpdateReq>, data: web::Data<AppStat
 #[post("/menu_delete")]
 pub async fn menu_delete(item: web::Json<MenuDeleteReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("menu_delete params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     //有下级的时候 不能直接删除
-    let menus = SysMenu::select_by_column(&mut rb, "parent_id", &item.id).await.unwrap_or_default();
+    let menus = SysMenu::select_by_column(rb, "parent_id", &item.id).await.unwrap_or_default();
 
     if menus.len() > 0 {
         return Ok(web::Json(err_result_msg("有下级菜单,不能直接删除".to_string())));
     }
 
-    let result = SysMenu::delete_by_column(&mut rb, "id", &item.id).await;
+    let result = SysMenu::delete_by_column(rb, "id", &item.id).await;
 
     Ok(web::Json(handle_result(result)))
 }

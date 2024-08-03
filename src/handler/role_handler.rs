@@ -1,6 +1,6 @@
 use actix_web::{post, Responder, Result, web};
 use rbatis::rbdc::datetime::DateTime;
-use rbatis::sql::{PageRequest};
+use rbatis::plugin::page::PageRequest;
 use crate::AppState;
 use crate::model::role::{SysRole};
 use crate::model::menu::{SysMenu};
@@ -13,13 +13,13 @@ use crate::vo::role_vo::*;
 #[post("/role_list")]
 pub async fn role_list(item: web::Json<RoleListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("role_list params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     let role_name = item.role_name.clone().unwrap_or_default();
     let status_id = item.status_id.clone().unwrap_or_default();
 
     let page_req = &PageRequest::new(item.page_no.clone(), item.page_size.clone());
-    let result = SysRole::select_page_by_name(&mut rb, page_req, &role_name, &status_id).await;
+    let result = SysRole::select_page_by_name(rb, page_req, &role_name, &status_id).await;
 
     let mut role_list: Vec<RoleListData> = Vec::new();
     match result {
@@ -50,7 +50,7 @@ pub async fn role_list(item: web::Json<RoleListReq>, data: web::Data<AppState>) 
 #[post("/role_save")]
 pub async fn role_save(item: web::Json<RoleSaveReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("role_save params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     let role = item.0;
 
@@ -64,7 +64,7 @@ pub async fn role_save(item: web::Json<RoleSaveReq>, data: web::Data<AppState>) 
         remark: role.remark,
     };
 
-    let result = SysRole::insert(&mut rb, &sys_role).await;
+    let result = SysRole::insert(rb, &sys_role).await;
 
     Ok(web::Json(handle_result(result)))
 }
@@ -73,7 +73,7 @@ pub async fn role_save(item: web::Json<RoleSaveReq>, data: web::Data<AppState>) 
 #[post("/role_update")]
 pub async fn role_update(item: web::Json<RoleUpdateReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("role_update params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     let role = item.0;
 
@@ -87,7 +87,7 @@ pub async fn role_update(item: web::Json<RoleUpdateReq>, data: web::Data<AppStat
         remark: role.remark,
     };
 
-    let result = SysRole::update_by_column(&mut rb, &sys_role, "id").await;
+    let result = SysRole::update_by_column(rb, &sys_role, "id").await;
 
     Ok(web::Json(handle_result(result)))
 }
@@ -96,16 +96,16 @@ pub async fn role_update(item: web::Json<RoleUpdateReq>, data: web::Data<AppStat
 #[post("/role_delete")]
 pub async fn role_delete(item: web::Json<RoleDeleteReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("role_delete params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     let ids = item.ids.clone();
-    let user_role_list = SysUserRole::select_in_column(&mut rb, "role_id", &ids).await.unwrap_or_default();
+    let user_role_list = SysUserRole::select_in_column(rb, "role_id", &ids).await.unwrap_or_default();
 
     if user_role_list.len() > 0 {
         return Ok(web::Json(err_result_msg("角色已被使用,不能直接删除".to_string())));
     }
 
-    let result = SysRole::delete_in_column(&mut rb, "id", &item.ids).await;
+    let result = SysRole::delete_in_column(rb, "id", &item.ids).await;
 
     Ok(web::Json(handle_result(result)))
 }
@@ -114,10 +114,10 @@ pub async fn role_delete(item: web::Json<RoleDeleteReq>, data: web::Data<AppStat
 #[post("/query_role_menu")]
 pub async fn query_role_menu(item: web::Json<QueryRoleMenuReq>, data: web::Data<AppState>) -> Result<impl Responder> {
     log::info!("query_role_menu params: {:?}", &item);
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
     // 查询所有菜单
-    let menu_list = SysMenu::select_all(&mut rb).await.unwrap_or_default();
+    let menu_list = SysMenu::select_all(rb).await.unwrap_or_default();
 
     let mut menu_data_list: Vec<MenuDataList> = Vec::new();
     let mut role_menu_ids: Vec<i32> = Vec::new();
@@ -138,7 +138,7 @@ pub async fn query_role_menu(item: web::Json<QueryRoleMenuReq>, data: web::Data<
     //不是超级管理员的时候,就要查询角色和菜单的关联
     if item.role_id != 1 {
         role_menu_ids.clear();
-        let role_menu_list = query_menu_by_role(&mut rb, item.role_id.clone()).await.unwrap_or_default();
+        let role_menu_list = query_menu_by_role(rb, item.role_id.clone()).await.unwrap_or_default();
 
         for x in role_menu_list {
             let m_id = x.get("menu_id").unwrap().clone();
@@ -158,9 +158,9 @@ pub async fn update_role_menu(item: web::Json<UpdateRoleMenuReq>, data: web::Dat
     log::info!("update_role_menu params: {:?}", &item);
     let role_id = item.role_id.clone();
 
-    let mut rb = &data.batis;
+    let rb = &data.batis;
 
-    let role_menu_result = SysRoleMenu::delete_by_column(&mut rb, "role_id", &role_id).await;
+    let role_menu_result = SysRoleMenu::delete_by_column(rb, "role_id", &role_id).await;
 
     match role_menu_result {
         Ok(_) => {
@@ -179,7 +179,7 @@ pub async fn update_role_menu(item: web::Json<UpdateRoleMenuReq>, data: web::Dat
                 })
             }
 
-            let result = SysRoleMenu::insert_batch(&mut rb, &menu_role, item.menu_ids.len() as u64).await;
+            let result = SysRoleMenu::insert_batch(rb, &menu_role, item.menu_ids.len() as u64).await;
 
             Ok(web::Json(handle_result(result)))
         }
