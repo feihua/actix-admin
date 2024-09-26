@@ -219,7 +219,7 @@ pub async fn update_role_menu(item: web::Json<UpdateRoleMenuReq>) -> Result<impl
                         })
                     }
 
-                    handle_result(diesel::insert_into(sys_role_menu::table()).values(role_menu).execute(conn))
+                    handle_result(diesel::insert_into(sys_role_menu::table()).values(&role_menu).execute(conn))
                 }
                 Err(err) => {
                     error!("err:{}", err.to_string());
