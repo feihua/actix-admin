@@ -56,6 +56,6 @@ pub struct SysMenuUpdate {
 
 #[derive(QueryableByName)]
 pub struct StringColumn {
-    #[sql_type = "diesel::sql_types::Varchar"]
+    #[diesel(sql_type = diesel::sql_types::Varchar)]
     pub api_url: String,
 }

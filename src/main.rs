@@ -1,6 +1,6 @@
 use std::env;
 
-use actix_web::{App, get, HttpResponse, HttpServer, middleware, Responder, web};
+use actix_web::{App, get, HttpResponse, HttpServer, middleware as md, Responder, web};
 use diesel::MysqlConnection;
 use diesel::r2d2::{self, ConnectionManager};
 use dotenvy::dotenv;
@@ -8,13 +8,14 @@ use once_cell::sync::Lazy;
 use tracing_actix_web::TracingLogger;
 
 use crate::handler::{menu_handler, role_handler, user_handler};
-use crate::utils::auth;
+use crate::middleware::auth;
 
 pub mod model;
 pub mod vo;
 pub mod handler;
 pub mod utils;
 pub mod schema;
+pub mod middleware;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -41,7 +42,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(middleware::Logger::default())
+            .wrap(md::Logger::default())
             .wrap(TracingLogger::default())
             .wrap(auth::Auth)
             .service(index)
