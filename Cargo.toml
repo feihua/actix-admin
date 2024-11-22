@@ -14,7 +14,7 @@ futures-util = "0.3.25"
 json = "0.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-validator = { version = "0.18.1", features = ["derive"] }
+validator = { version = "0.19.0", features = ["derive"] }
 
 log = "0.4"
 log4rs = "1.0"
@@ -27,7 +27,7 @@ rbdc-mysql={version="4.5"}
 
 jsonwebtoken = "9.3.0"
 
-redis = "0.25.3"
+redis = "0.27.5"
 
 futures = { version = "0.3", default-features = false }
-thiserror = "1.0"
+thiserror = "2.0.3"
