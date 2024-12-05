@@ -6,10 +6,10 @@ pub mod vo;
 pub mod handler;
 pub mod utils;
 
-use actix_web::{App, get, HttpResponse, HttpServer, middleware, Responder, web};
+use actix_web::{get, middleware, web, App, HttpResponse, HttpServer, Responder};
 use rbatis::RBatis;
-use crate::handler::{menu_handler, role_handler, user_handler};
 use tracing_actix_web::TracingLogger;
+use handler::system::{menu_handler, role_handler, user_handler};
 use crate::model::db::init_db;
 use crate::utils::auth;
 

@@ -2,9 +2,9 @@ use actix_web::{post, Responder, Result, web};
 use rbatis::rbdc::datetime::DateTime;
 use crate::AppState;
 
-use crate::model::menu::{SysMenu};
+use crate::model::system::menu::{SysMenu};
 use crate::vo::{err_result_msg, err_result_page, handle_result, ok_result_page};
-use crate::vo::menu_vo::{*};
+use crate::vo::system::menu_vo::{*};
 
 // 查询菜单
 #[post("/menu_list")]
