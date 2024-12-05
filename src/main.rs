@@ -5,13 +5,14 @@ pub mod model;
 pub mod vo;
 pub mod handler;
 pub mod utils;
+pub mod middleware;
 
-use actix_web::{get, middleware, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, middleware  as md, web, App, HttpResponse, HttpServer, Responder};
 use rbatis::RBatis;
 use tracing_actix_web::TracingLogger;
 use handler::system::{menu_handler, role_handler, user_handler};
 use crate::model::db::init_db;
-use crate::utils::auth;
+use middleware::auth;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -40,7 +41,7 @@ async fn main() -> std::io::Result<()> {
                 app_name: String::from("Actix Web"),
                 batis: rb.clone(),
             }))
-            .wrap(middleware::Logger::default())
+            .wrap(md::Logger::default())
             .wrap(TracingLogger::default())
             .wrap(auth::Auth)
             .service(index)
