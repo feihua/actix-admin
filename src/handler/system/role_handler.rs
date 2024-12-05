@@ -1,17 +1,21 @@
-use actix_web::{post, Responder, Result, web};
-use rbatis::rbdc::datetime::DateTime;
-use rbatis::plugin::page::PageRequest;
-use crate::AppState;
-use crate::model::system::role::{SysRole};
-use crate::model::system::menu::{SysMenu};
+use crate::common::result::BaseResponse;
+use crate::common::result_page::ResponsePage;
+use crate::model::system::menu::SysMenu;
+use crate::model::system::role::SysRole;
 use crate::model::system::role_menu::{query_menu_by_role, SysRoleMenu};
 use crate::model::system::user_role::SysUserRole;
-use crate::vo::{err_result_msg, err_result_page, handle_result, ok_result_data, ok_result_page};
 use crate::vo::system::role_vo::*;
+use crate::AppState;
+use actix_web::{post, web, Responder, Result};
+use rbatis::plugin::page::PageRequest;
+use rbatis::rbdc::datetime::DateTime;
 
 // 查询角色列表
 #[post("/role_list")]
-pub async fn role_list(item: web::Json<RoleListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn role_list(
+    item: web::Json<RoleListReq>,
+    data: web::Data<AppState>,
+) -> Result<impl Responder> {
     log::info!("role_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -38,17 +42,18 @@ pub async fn role_list(item: web::Json<RoleListReq>, data: web::Data<AppState>) 
                 })
             }
 
-            Ok(web::Json(ok_result_page(role_list, total)))
+            ResponsePage::<Vec<RoleListData>>::ok_result_page(role_list, total)
         }
-        Err(err) => {
-            Ok(web::Json(err_result_page(role_list, err.to_string())))
-        }
+        Err(err) => ResponsePage::<Vec<RoleListData>>::err_result_page(role_list, err.to_string()),
     }
 }
 
 // 添加角色信息
 #[post("/role_save")]
-pub async fn role_save(item: web::Json<RoleSaveReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn role_save(
+    item: web::Json<RoleSaveReq>,
+    data: web::Data<AppState>,
+) -> Result<impl Responder> {
     log::info!("role_save params: {:?}", &item);
     let rb = &data.batis;
 
@@ -66,12 +71,18 @@ pub async fn role_save(item: web::Json<RoleSaveReq>, data: web::Data<AppState>) 
 
     let result = SysRole::insert(rb, &sys_role).await;
 
-    Ok(web::Json(handle_result(result)))
+    match result {
+        Ok(_u) => BaseResponse::<String>::ok_result(),
+        Err(err) => BaseResponse::<String>::err_result_msg(err.to_string()),
+    }
 }
 
 // 更新角色信息
 #[post("/role_update")]
-pub async fn role_update(item: web::Json<RoleUpdateReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn role_update(
+    item: web::Json<RoleUpdateReq>,
+    data: web::Data<AppState>,
+) -> Result<impl Responder> {
     log::info!("role_update params: {:?}", &item);
     let rb = &data.batis;
 
@@ -89,30 +100,44 @@ pub async fn role_update(item: web::Json<RoleUpdateReq>, data: web::Data<AppStat
 
     let result = SysRole::update_by_column(rb, &sys_role, "id").await;
 
-    Ok(web::Json(handle_result(result)))
+    match result {
+        Ok(_u) => BaseResponse::<String>::ok_result(),
+        Err(err) => BaseResponse::<String>::err_result_msg(err.to_string()),
+    }
 }
 
 // 删除角色信息
 #[post("/role_delete")]
-pub async fn role_delete(item: web::Json<RoleDeleteReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn role_delete(
+    item: web::Json<RoleDeleteReq>,
+    data: web::Data<AppState>,
+) -> Result<impl Responder> {
     log::info!("role_delete params: {:?}", &item);
     let rb = &data.batis;
 
     let ids = item.ids.clone();
-    let user_role_list = SysUserRole::select_in_column(rb, "role_id", &ids).await.unwrap_or_default();
+    let user_role_list = SysUserRole::select_in_column(rb, "role_id", &ids)
+        .await
+        .unwrap_or_default();
 
     if user_role_list.len() > 0 {
-        return Ok(web::Json(err_result_msg("角色已被使用,不能直接删除".to_string())));
+        return BaseResponse::<String>::err_result_msg("角色已被使用,不能直接删除".to_string());
     }
 
     let result = SysRole::delete_in_column(rb, "id", &item.ids).await;
 
-    Ok(web::Json(handle_result(result)))
+    match result {
+        Ok(_u) => BaseResponse::<String>::ok_result(),
+        Err(err) => BaseResponse::<String>::err_result_msg(err.to_string()),
+    }
 }
 
 // 查询角色关联的菜单
 #[post("/query_role_menu")]
-pub async fn query_role_menu(item: web::Json<QueryRoleMenuReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_role_menu(
+    item: web::Json<QueryRoleMenuReq>,
+    data: web::Data<AppState>,
+) -> Result<impl Responder> {
     log::info!("query_role_menu params: {:?}", &item);
     let rb = &data.batis;
 
@@ -138,7 +163,9 @@ pub async fn query_role_menu(item: web::Json<QueryRoleMenuReq>, data: web::Data<
     //不是超级管理员的时候,就要查询角色和菜单的关联
     if item.role_id != 1 {
         role_menu_ids.clear();
-        let role_menu_list = query_menu_by_role(rb, item.role_id.clone()).await.unwrap_or_default();
+        let role_menu_list = query_menu_by_role(rb, item.role_id.clone())
+            .await
+            .unwrap_or_default();
 
         for x in role_menu_list {
             let m_id = x.get("menu_id").unwrap().clone();
@@ -146,15 +173,18 @@ pub async fn query_role_menu(item: web::Json<QueryRoleMenuReq>, data: web::Data<
         }
     }
 
-    Ok(web::Json(ok_result_data(QueryRoleMenuData {
+    BaseResponse::<QueryRoleMenuData>::ok_result_data(QueryRoleMenuData {
         role_menus: role_menu_ids,
         menu_list: menu_data_list,
-    })))
+    })
 }
 
 // 更新角色关联的菜单
 #[post("/update_role_menu")]
-pub async fn update_role_menu(item: web::Json<UpdateRoleMenuReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_role_menu(
+    item: web::Json<UpdateRoleMenuReq>,
+    data: web::Data<AppState>,
+) -> Result<impl Responder> {
     log::info!("update_role_menu params: {:?}", &item);
     let role_id = item.role_id.clone();
 
@@ -179,13 +209,14 @@ pub async fn update_role_menu(item: web::Json<UpdateRoleMenuReq>, data: web::Dat
                 })
             }
 
-            let result = SysRoleMenu::insert_batch(rb, &menu_role, item.menu_ids.len() as u64).await;
+            let result =
+                SysRoleMenu::insert_batch(rb, &menu_role, item.menu_ids.len() as u64).await;
 
-            Ok(web::Json(handle_result(result)))
+            match result {
+                Ok(_u) => BaseResponse::<String>::ok_result(),
+                Err(err) => BaseResponse::<String>::err_result_msg(err.to_string()),
+            }
         }
-        Err(err) => {
-            Ok(web::Json(err_result_msg(err.to_string()))
-            )
-        }
+        Err(err) => BaseResponse::<String>::err_result_msg(err.to_string()),
     }
 }

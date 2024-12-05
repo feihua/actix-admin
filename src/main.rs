@@ -6,6 +6,7 @@ pub mod vo;
 pub mod handler;
 pub mod utils;
 pub mod middleware;
+pub mod common;
 
 use actix_web::{get, middleware  as md, web, App, HttpResponse, HttpServer, Responder};
 use rbatis::RBatis;
