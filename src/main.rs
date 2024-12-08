@@ -1,13 +1,12 @@
 use std::env;
 
-use actix_web::{App, get, HttpResponse, HttpServer, middleware as md, Responder, web};
+use actix_web::{get, middleware as md, web, App, HttpResponse, HttpServer, Responder};
 use diesel::MysqlConnection;
 use diesel::r2d2::{self, ConnectionManager};
 use dotenvy::dotenv;
 use once_cell::sync::Lazy;
 use tracing_actix_web::TracingLogger;
-
-use crate::handler::{menu_handler, role_handler, user_handler};
+use handler::system::{menu_handler, role_handler, user_handler};
 use crate::middleware::auth;
 
 pub mod model;
@@ -16,6 +15,7 @@ pub mod handler;
 pub mod utils;
 pub mod schema;
 pub mod middleware;
+pub mod common;
 
 #[get("/")]
 async fn index() -> impl Responder {

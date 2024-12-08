@@ -7,7 +7,7 @@ use futures_util::future::LocalBoxFuture;
 use crate::utils::jwt_util::JWTToken;
 use actix_web::{error};
 use serde_json::json;
-use crate::utils::error::WhoUnfollowedError;
+use crate::common::error::WhoUnfollowedError;
 
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with
