@@ -1,16 +1,17 @@
 use std::env;
 
-use actix_web::{App, get, HttpResponse, HttpServer, middleware, Responder, web};
+use actix_web::{get, middleware as md, web, App, HttpResponse, HttpServer, Responder};
 use sea_orm::{Database, DatabaseConnection};
 use tracing_actix_web::TracingLogger;
-
-use crate::handler::{menu_handler, role_handler, user_handler};
-use crate::utils::auth;
+use handler::system::{menu_handler, role_handler, user_handler};
+use crate::middleware::auth;
 
 pub mod model;
 pub mod vo;
 pub mod handler;
 pub mod utils;
+pub mod middleware;
+pub mod common;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -42,7 +43,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(state.clone()))
-            .wrap(middleware::Logger::default())
+            .wrap(md::Logger::default())
             .wrap(TracingLogger::default())
             .wrap(auth::Auth)
             .service(index)
