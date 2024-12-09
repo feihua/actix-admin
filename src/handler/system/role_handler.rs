@@ -5,9 +5,9 @@ use log::{debug, error, info};
 
 use crate::{RB, schema};
 use crate::common::result::BaseResponse;
-use crate::model::menu::SysMenu;
-use crate::model::role::{SysRole, SysRoleAdd, SysRoleUpdate};
-use crate::model::role_menu::SysRoleMenuAdd;
+use crate::model::system::menu::SysMenu;
+use crate::model::system::role::{SysRole, SysRoleAdd, SysRoleUpdate};
+use crate::model::system::role_menu::SysRoleMenuAdd;
 use crate::schema::sys_menu::dsl::sys_menu;
 use crate::schema::sys_role::{id, role_name, status_id};
 use crate::schema::sys_role::dsl::sys_role;
