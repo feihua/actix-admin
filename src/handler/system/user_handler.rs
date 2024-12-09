@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use actix_web::{Either, get, HttpRequest, post, Responder, Result, web};
+use actix_web::{get, post, web, Either, HttpRequest, Responder, Result};
 use actix_web::http::header;
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseBackend, DatabaseConnection, EntityTrait, NotSet, PaginatorTrait, QueryFilter, QueryOrder, QueryTrait, Statement};
 use sea_orm::ActiveValue::Set;
@@ -8,8 +8,8 @@ use sea_orm::ActiveValue::Set;
 use crate::AppState;
 use crate::common::error::WhoUnfollowedError;
 use crate::common::result::BaseResponse;
-use crate::model::{sys_menu, sys_user, sys_user_role};
-use crate::model::prelude::{SysMenu, SysRole, SysUser, SysUserRole};
+use crate::model::system::prelude::{SysMenu, SysRole, SysUser, SysUserRole};
+use crate::model::system::{sys_menu, sys_user, sys_user_role};
 use crate::utils::jwt_util::JWTToken;
 use crate::vo::system::user_vo::*;
 
