@@ -1,5 +1,4 @@
 use crate::common::result::BaseResponse;
-use crate::common::result_page::ResponsePage;
 use crate::model::system::menu::SysMenu;
 use crate::model::system::role::SysRole;
 use crate::model::system::role_menu::{query_menu_by_role, SysRoleMenu};
@@ -42,9 +41,9 @@ pub async fn role_list(
                 })
             }
 
-            ResponsePage::<Vec<RoleListData>>::ok_result_page(role_list, total)
+            BaseResponse::<Vec<RoleListData>>::ok_result_page(role_list, total)
         }
-        Err(err) => ResponsePage::<Vec<RoleListData>>::err_result_page(role_list, err.to_string()),
+        Err(err) => BaseResponse::<Vec<RoleListData>>::err_result_page(role_list, err.to_string()),
     }
 }
 

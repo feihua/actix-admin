@@ -7,7 +7,6 @@ use rbatis::rbdc::datetime::DateTime;
 use rbs::to_value;
 
 use crate::common::result::BaseResponse;
-use crate::common::result_page::ResponsePage;
 use crate::model::system::menu::SysMenu;
 use crate::model::system::role::SysRole;
 use crate::model::system::user::SysUser;
@@ -319,9 +318,9 @@ pub async fn user_list(
                 })
             }
 
-            ResponsePage::<Vec<UserListData>>::ok_result_page(list_data, total)
+            BaseResponse::<Vec<UserListData>>::ok_result_page(list_data, total)
         }
-        Err(err) => ResponsePage::<Vec<UserListData>>::err_result_page(list_data, err.to_string()),
+        Err(err) => BaseResponse::<Vec<UserListData>>::err_result_page(list_data, err.to_string()),
     }
 }
 
