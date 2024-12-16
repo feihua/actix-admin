@@ -1,19 +1,20 @@
 #[macro_use]
 extern crate rbatis;
 
-pub mod model;
-pub mod vo;
-pub mod handler;
-pub mod utils;
-pub mod middleware;
 pub mod common;
+pub mod handler;
+pub mod middleware;
+pub mod model;
+pub mod route;
+pub mod utils;
+pub mod vo;
 
-use actix_web::{get, middleware  as md, web, App, HttpResponse, HttpServer, Responder};
+use crate::handler::system::{sys_menu_handler, sys_role_handler, sys_user_handler};
+use crate::model::db::init_db;
+use actix_web::{get, middleware as md, web, App, HttpResponse, HttpServer, Responder};
+use middleware::auth;
 use rbatis::RBatis;
 use tracing_actix_web::TracingLogger;
-use handler::system::{menu_handler, role_handler, user_handler};
-use crate::model::db::init_db;
-use middleware::auth;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -46,28 +47,36 @@ async fn main() -> std::io::Result<()> {
             .wrap(TracingLogger::default())
             .wrap(auth::Auth)
             .service(index)
-            .service((web::scope("/api"))
-                .service(user_handler::login)
-                .service(user_handler::query_user_role)
-                .service(user_handler::update_user_role)
-                .service(user_handler::query_user_menu)
-                .service(user_handler::user_list)
-                .service(user_handler::user_save)
-                .service(user_handler::user_delete)
-                .service(user_handler::user_update)
-                .service(user_handler::update_user_password)
-                .service(role_handler::query_role_menu)
-                .service(role_handler::update_role_menu)
-                .service(role_handler::role_list)
-                .service(role_handler::role_save)
-                .service(role_handler::role_delete)
-                .service(role_handler::role_update)
-                .service(menu_handler::menu_list)
-                .service(menu_handler::menu_save)
-                .service(menu_handler::menu_delete)
-                .service(menu_handler::menu_update))
+            .service(
+                (web::scope("/api"))
+                    .service(sys_user_handler::add_sys_user)
+                    .service(sys_user_handler::delete_sys_user)
+                    .service(sys_user_handler::update_sys_user)
+                    .service(sys_user_handler::update_sys_user_status)
+                    .service(sys_user_handler::update_user_password)
+                    .service(sys_user_handler::query_sys_user_detail)
+                    .service(sys_user_handler::query_sys_user_list)
+                    .service(sys_user_handler::query_user_role)
+                    .service(sys_user_handler::update_user_role)
+                    .service(sys_user_handler::query_user_menu)
+                    .service(sys_user_handler::login)
+                    .service(sys_role_handler::add_sys_role)
+                    .service(sys_role_handler::delete_sys_role)
+                    .service(sys_role_handler::update_sys_role)
+                    .service(sys_role_handler::update_sys_role_status)
+                    .service(sys_role_handler::query_sys_role_detail)
+                    .service(sys_role_handler::query_sys_role_list)
+                    .service(sys_role_handler::query_role_menu)
+                    .service(sys_role_handler::update_role_menu)
+                    .service(sys_menu_handler::add_sys_menu)
+                    .service(sys_menu_handler::delete_sys_menu)
+                    .service(sys_menu_handler::update_sys_menu)
+                    .service(sys_menu_handler::update_sys_menu_status)
+                    .service(sys_menu_handler::query_sys_menu_detail)
+                    .service(sys_menu_handler::query_sys_menu_list),
+            )
     })
-        .bind(("0.0.0.0", 8788))?
-        .run()
-        .await
+    .bind(("0.0.0.0", 8788))?
+    .run()
+    .await
 }

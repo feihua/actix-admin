@@ -1,13 +1,16 @@
 use std::future::{ready, Ready};
 use std::rc::Rc;
 
-use actix_web::{dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}, Error};
-use actix_web::http::header;
-use futures_util::future::LocalBoxFuture;
-use crate::utils::jwt_util::JWTToken;
-use actix_web::{error};
-use serde_json::json;
 use crate::utils::error::WhoUnfollowedError;
+use crate::utils::jwt_util::JWTToken;
+use actix_web::error;
+use actix_web::http::header;
+use actix_web::{
+    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
+    Error,
+};
+use futures_util::future::LocalBoxFuture;
+use serde_json::json;
 
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with
@@ -19,9 +22,9 @@ pub struct Auth;
 // `S` - type of the next service
 // `B` - type of response's body
 impl<S, B> Transform<S, ServiceRequest> for Auth
-    where
-        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error> + 'static,
-        S::Future: 'static,
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
@@ -31,7 +34,7 @@ impl<S, B> Transform<S, ServiceRequest> for Auth
 
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(AuthMiddleware {
-            service: Rc::new(service)
+            service: Rc::new(service),
         }))
     }
 }
@@ -41,9 +44,9 @@ pub struct AuthMiddleware<S> {
 }
 
 impl<S, B> Service<ServiceRequest> for AuthMiddleware<S>
-    where
-        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error> + 'static,
-        S::Future: 'static,
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
@@ -77,27 +80,31 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S>
 
             if token.len() <= 0 {
                 let john = json!({
-                        "msg": "token不能为空",
-                        "code": 2,
-                        "path": path
-                    });
+                    "msg": "token不能为空",
+                    "code": 2,
+                    "path": path
+                });
                 return Err(error::ErrorUnauthorized(john.to_string()));
             }
 
             let jwt_token_e = JWTToken::verify("123", &token);
             let jwt_token = match jwt_token_e {
-                Ok(data) => { data }
+                Ok(data) => data,
                 Err(err) => {
                     let er = match err {
-                        WhoUnfollowedError::JwtTokenError(s) => { s }
-                        _ => "no math error".to_string()
+                        WhoUnfollowedError::JwtTokenError(s) => s,
+                        _ => "no math error".to_string(),
                     };
                     let john = json!({
                         "msg": er,
                         "code": 2,
                         "path": path
                     });
-                    log::error!("Hi from start. You requested path: {}, token: {}", path, token);
+                    log::error!(
+                        "Hi from start. You requested path: {}, token: {}",
+                        path,
+                        token
+                    );
                     return Err(error::ErrorUnauthorized(john.to_string()));
                 }
             };
@@ -114,7 +121,10 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S>
                 let res = fut.await?;
                 Ok(res)
             } else {
-                log::error!("Hi from start. You requested path: {:?}", jwt_token.permissions);
+                log::error!(
+                    "Hi from start. You requested path: {:?}",
+                    jwt_token.permissions
+                );
                 let john = json!({
                     "msg": "无权限访问",
                     "code": 1,
