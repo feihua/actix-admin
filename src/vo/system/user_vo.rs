@@ -9,12 +9,10 @@ pub struct UserLoginReq {
     pub password: String,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct QueryUserRoleReq {
     pub user_id: i32,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryUserRoleData {
@@ -70,7 +68,6 @@ pub struct MenuUserList {
     pub menu_type: i8,
     pub icon: String,
 }
-
 
 #[derive(Debug, Validate, Serialize, Deserialize)]
 pub struct UserListReq {

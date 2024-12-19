@@ -38,12 +38,10 @@ pub struct RoleUpdateReq {
     pub remark: Option<String>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RoleDeleteReq {
     pub ids: Vec<i64>,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryRoleMenuReq {
@@ -72,5 +70,3 @@ pub struct UpdateRoleMenuReq {
     pub menu_ids: Vec<i64>,
     pub role_id: i64,
 }
-
-

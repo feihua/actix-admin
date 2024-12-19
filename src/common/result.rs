@@ -62,6 +62,14 @@ where
         }))
     }
 
+    pub fn err_result_data(data: T, msg: String) -> Result<Json<BaseResponse<T>>> {
+        Ok(Json(BaseResponse {
+            msg,
+            code: 1,
+            data: Some(data),
+        }))
+    }
+
     pub fn err_result_msg(msg: String) -> Result<Json<BaseResponse<String>>> {
         Ok(Json(BaseResponse {
             msg: msg.to_string(),
@@ -87,5 +95,4 @@ where
             total,
         }))
     }
-
 }
