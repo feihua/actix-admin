@@ -15,7 +15,7 @@ Authorization: Bearer {{token}}
 
 
 ###用户列表 user_list
-POST {{host}}/api/user_list
+POST {{host}}/api/query_user_list
 Content-Type: application/json
 Authorization: Bearer {{token}}
 

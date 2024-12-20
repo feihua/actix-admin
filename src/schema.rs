@@ -14,7 +14,7 @@ diesel::table! {
         #[max_length = 255]
         api_url -> Varchar,
         #[max_length = 255]
-        menu_icon -> Nullable<Varchar>,
+        menu_icon -> Varchar,
         #[max_length = 255]
         remark -> Nullable<Varchar>,
         create_time -> Datetime,
@@ -41,10 +41,7 @@ diesel::table! {
         id -> Bigint,
         role_id -> Bigint,
         menu_id -> Bigint,
-        status_id -> Tinyint,
-        sort -> Integer,
         create_time -> Datetime,
-        update_time -> Datetime,
     }
 }
 
@@ -52,12 +49,12 @@ diesel::table! {
     sys_user (id) {
         id -> Bigint,
         #[max_length = 11]
-        mobile -> Varchar,
+        mobile -> Char,
         #[max_length = 50]
         user_name -> Varchar,
         #[max_length = 64]
         password -> Varchar,
-        status_id -> Integer,
+        status_id -> Tinyint,
         sort -> Integer,
         #[max_length = 255]
         remark -> Nullable<Varchar>,
@@ -71,10 +68,7 @@ diesel::table! {
         id -> Bigint,
         user_id -> Bigint,
         role_id -> Bigint,
-        status_id -> Tinyint,
-        sort -> Integer,
         create_time -> Datetime,
-        update_time -> Datetime,
     }
 }
 
