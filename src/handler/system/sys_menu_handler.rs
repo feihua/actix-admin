@@ -11,7 +11,7 @@ use crate::vo::system::sys_menu_vo::*;
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/addMenu")]
+#[post("/system/menu/addMenu")]
 pub async fn add_sys_menu(
     item: web::Json<AddMenuReq>,
     data: web::Data<AppState>,
@@ -25,7 +25,7 @@ pub async fn add_sys_menu(
         id: None,                 //主键
         menu_name: req.menu_name, //菜单名称
         menu_type: req.menu_type, //菜单类型(1：目录   2：菜单   3：按钮)
-        status_id: req.status_id, //状态(1:正常，0:禁用)
+        status: req.status, //状态(1:正常，0:禁用)
         sort: req.sort,           //排序
         parent_id: req.parent_id, //父ID
         menu_url: req.menu_url,   //路由路径
@@ -49,7 +49,7 @@ pub async fn add_sys_menu(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/deleteMenu")]
+#[post("/system/menu/deleteMenu")]
 pub async fn delete_sys_menu(
     item: web::Json<DeleteMenuReq>,
     data: web::Data<AppState>,
@@ -79,7 +79,7 @@ pub async fn delete_sys_menu(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/updateMenu")]
+#[post("/system/menu/updateMenu")]
 pub async fn update_sys_menu(
     item: web::Json<UpdateMenuReq>,
     data: web::Data<AppState>,
@@ -92,7 +92,7 @@ pub async fn update_sys_menu(
         id: Some(req.id),         //主键
         menu_name: req.menu_name, //菜单名称
         menu_type: req.menu_type, //菜单类型(1：目录   2：菜单   3：按钮)
-        status_id: req.status_id, //状态(1:正常，0:禁用)
+        status: req.status, //状态(1:正常，0:禁用)
         sort: req.sort,           //排序
         parent_id: req.parent_id, //父ID
         menu_url: req.menu_url,   //路由路径
@@ -116,7 +116,7 @@ pub async fn update_sys_menu(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/updateMenuStatus")]
+#[post("/system/menu/updateMenuStatus")]
 pub async fn update_sys_menu_status(
     item: web::Json<UpdateMenuStatusReq>,
     data: web::Data<AppState>,
@@ -141,7 +141,7 @@ pub async fn update_sys_menu_status(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/queryMenuDetail")]
+#[post("/system/menu/queryMenuDetail")]
 pub async fn query_sys_menu_detail(
     item: web::Json<QueryMenuDetailReq>,
     data: web::Data<AppState>,
@@ -159,7 +159,7 @@ pub async fn query_sys_menu_detail(
                 id: x.id.unwrap(),                                 //主键
                 menu_name: x.menu_name,                            //菜单名称
                 menu_type: x.menu_type, //菜单类型(1：目录   2：菜单   3：按钮)
-                status_id: x.status_id, //状态(1:正常，0:禁用)
+                status: x.status, //状态(1:正常，0:禁用)
                 sort: x.sort,           //排序
                 parent_id: x.parent_id, //父ID
                 menu_url: x.menu_url.unwrap_or_default(), //路由路径
@@ -184,7 +184,7 @@ pub async fn query_sys_menu_detail(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/queryMenuList")]
+#[post("/system/menu/queryMenuList")]
 pub async fn query_sys_menu_list(
     item: web::Json<QueryMenuListReq>,
     data: web::Data<AppState>,
@@ -199,11 +199,11 @@ pub async fn query_sys_menu_list(
     match result {
         Ok(d) => {
             for x in d {
-                let sys_menu = MenuListDataResp {
+                let sys_menu1 = MenuListDataResp {
                     id: x.id.unwrap(),                                 //主键
                     menu_name: x.menu_name,                            //菜单名称
                     menu_type: x.menu_type, //菜单类型(1：目录   2：菜单   3：按钮)
-                    status_id: x.status_id, //状态(1:正常，0:禁用)
+                    status: x.status,
                     sort: x.sort,           //排序
                     parent_id: x.parent_id, //父ID
                     menu_url: x.menu_url.unwrap_or_default(), //路由路径
@@ -213,7 +213,7 @@ pub async fn query_sys_menu_list(
                     create_time: x.create_time.unwrap().0.to_string(), //创建时间
                     update_time: x.update_time.unwrap().0.to_string(), //修改时间
                 };
-                sys_menu_list_data.push(sys_menu);
+                sys_menu_list_data.push(sys_menu1);
             }
 
             BaseResponse::<Vec<MenuListDataResp>>::ok_result_page(sys_menu_list_data, 0)

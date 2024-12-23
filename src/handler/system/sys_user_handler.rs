@@ -20,7 +20,7 @@ use crate::vo::system::sys_user_vo::*;
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/addUser")]
+#[post("/system/user/addUser")]
 pub async fn add_sys_user(
     item: web::Json<AddUserReq>,
     data: web::Data<AppState>,
@@ -55,7 +55,7 @@ pub async fn add_sys_user(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/deleteUser")]
+#[post("/system/user/deleteUser")]
 pub async fn delete_sys_user(
     item: web::Json<DeleteUserReq>,
     data: web::Data<AppState>,
@@ -82,7 +82,7 @@ pub async fn delete_sys_user(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/updateUser")]
+#[post("/system/user/updateUser")]
 pub async fn update_sys_user(
     item: web::Json<UpdateUserReq>,
     data: web::Data<AppState>,
@@ -122,7 +122,7 @@ pub async fn update_sys_user(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/updateUserStatus")]
+#[post("/system/user/updateUserStatus")]
 pub async fn update_sys_user_status(
     item: web::Json<UpdateUserStatusReq>,
     data: web::Data<AppState>,
@@ -131,10 +131,18 @@ pub async fn update_sys_user_status(
     let rb = &data.batis;
     let req = item.0;
 
-    let param = vec![to_value!(req.status), to_value!(req.ids)];
-    let result = rb
-        .exec("update sys_user set status = ? where id in ?", param)
-        .await;
+    let update_sql = format!(
+        "update sys_user set status_id = ? where id in ({})",
+        req.ids
+            .iter()
+            .map(|_| "?")
+            .collect::<Vec<&str>>()
+            .join(", ")
+    );
+
+    let mut param = vec![to_value!(req.status)];
+    param.extend(req.ids.iter().map(|&id| to_value!(id)));
+    let result = rb.exec(&update_sql, param).await;
 
     match result {
         Ok(_u) => BaseResponse::<String>::ok_result(),
@@ -147,7 +155,7 @@ pub async fn update_sys_user_status(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/update_user_password")]
+#[post("/system/user/updateUserPassword")]
 pub async fn update_user_password(
     item: web::Json<UpdateUserPwdReq>,
     data: web::Data<AppState>,
@@ -186,7 +194,7 @@ pub async fn update_user_password(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/queryUserDetail")]
+#[post("/system/user/queryUserDetail")]
 pub async fn query_sys_user_detail(
     item: web::Json<QueryUserDetailReq>,
     data: web::Data<AppState>,
@@ -225,7 +233,7 @@ pub async fn query_sys_user_detail(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/queryUserList")]
+#[post("/system/user/queryUserList")]
 pub async fn query_sys_user_list(
     item: web::Json<QueryUserListReq>,
     data: web::Data<AppState>,
@@ -234,10 +242,11 @@ pub async fn query_sys_user_list(
     let rb = &data.batis;
 
     let mobile = item.mobile.as_deref().unwrap_or_default();
+    let user_name = item.user_name.as_deref().unwrap_or_default();
     let status_id = item.status_id.unwrap_or_default();
 
     let page = &PageRequest::new(item.page_no.clone(), item.page_size.clone());
-    let result = User::select_page_by_name(rb, page, mobile, status_id).await;
+    let result = User::select_page_by_name(rb, page, mobile, user_name, status_id).await;
 
     let mut sys_user_list_data: Vec<UserListDataResp> = Vec::new();
 
@@ -272,7 +281,7 @@ pub async fn query_sys_user_list(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/login")]
+#[post("/system/user/login")]
 pub async fn login(
     item: web::Json<UserLoginReq>,
     data: web::Data<AppState>,
@@ -358,7 +367,7 @@ async fn query_btn_menu(id: &i64, data: web::Data<AppState>) -> Vec<String> {
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/query_user_role")]
+#[post("/system/user/queryUserRole")]
 pub async fn query_user_role(
     item: web::Json<QueryUserRoleReq>,
     data: web::Data<AppState>,
@@ -400,7 +409,7 @@ pub async fn query_user_role(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/update_user_role")]
+#[post("/system/user/updateUserRole")]
 pub async fn update_user_role(
     item: web::Json<UpdateUserRoleReq>,
     data: web::Data<AppState>,
@@ -442,7 +451,7 @@ pub async fn update_user_role(
     }
 }
 
-#[get("/query_user_menu")]
+#[get("/system/user/queryUserMenu")]
 pub async fn query_user_menu(
     req: HttpRequest,
     data: web::Data<AppState>,

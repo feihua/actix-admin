@@ -16,7 +16,7 @@ use crate::vo::system::sys_role_vo::*;
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/addRole")]
+#[post("/system/role/addRole")]
 pub async fn add_sys_role(
     item: web::Json<AddRoleReq>,
     data: web::Data<AppState>,
@@ -49,7 +49,7 @@ pub async fn add_sys_role(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/deleteRole")]
+#[post("/system/role/deleteRole")]
 pub async fn delete_sys_role(
     item: web::Json<DeleteRoleReq>,
     data: web::Data<AppState>,
@@ -79,7 +79,7 @@ pub async fn delete_sys_role(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/updateRole")]
+#[post("/system/role/updateRole")]
 pub async fn update_sys_role(
     item: web::Json<UpdateRoleReq>,
     data: web::Data<AppState>,
@@ -111,7 +111,7 @@ pub async fn update_sys_role(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/updateRoleStatus")]
+#[post("/system/role/updateRoleStatus")]
 pub async fn update_sys_role_status(
     item: web::Json<UpdateRoleStatusReq>,
     data: web::Data<AppState>,
@@ -136,7 +136,7 @@ pub async fn update_sys_role_status(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/queryRoleDetail")]
+#[post("/system/role/queryRoleDetail")]
 pub async fn query_sys_role_detail(
     item: web::Json<QueryRoleDetailReq>,
     data: web::Data<AppState>,
@@ -174,7 +174,7 @@ pub async fn query_sys_role_detail(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/queryRoleList")]
+#[post("/system/role/queryRoleList")]
 pub async fn query_sys_role_list(
     item: web::Json<QueryRoleListReq>,
     data: web::Data<AppState>,
@@ -220,7 +220,7 @@ pub async fn query_sys_role_list(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/query_role_menu")]
+#[post("/system/role/queryRoleMenu")]
 pub async fn query_role_menu(
     item: web::Json<QueryRoleMenuReq>,
     data: web::Data<AppState>,
@@ -271,7 +271,7 @@ pub async fn query_role_menu(
  *author：刘飞华
  *date：2024/12/16 10:07:18
  */
-#[post("/update_role_menu")]
+#[post("/system/role/updateRoleMenu")]
 pub async fn update_role_menu(
     item: web::Json<UpdateRoleMenuReq>,
     data: web::Data<AppState>,
