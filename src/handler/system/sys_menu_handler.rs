@@ -17,7 +17,7 @@ use crate::RB;
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/add_sys_menu")]
+#[post("/system/menu/addMenu")]
 pub async fn add_sys_menu(req: web::Json<AddMenuReq>) -> Result<impl Responder> {
     info!("add sys_menu params: {:?}", &req);
     let item = req.0;
@@ -25,7 +25,7 @@ pub async fn add_sys_menu(req: web::Json<AddMenuReq>) -> Result<impl Responder> 
     let add_sys_menu_param = AddSysMenu {
         menu_name: item.menu_name,       //菜单名称
         menu_type: item.menu_type,       //菜单类型(1：目录   2：菜单   3：按钮)
-        status_id: item.status_id,       //状态(1:正常，0:禁用)
+        status: item.status,             //状态(1:正常，0:禁用)
         sort: item.sort,                 //排序
         parent_id: item.parent_id,       //父ID
         menu_url: item.menu_url,         //路由路径
@@ -58,7 +58,7 @@ pub async fn add_sys_menu(req: web::Json<AddMenuReq>) -> Result<impl Responder> 
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/delete_sys_menu")]
+#[post("/system/menu/deleteMenu")]
 pub async fn delete_sys_menu(item: web::Json<DeleteMenuReq>) -> Result<impl Responder> {
     info!("delete sys_menu params: {:?}", &item);
     match &mut RB.clone().get() {
@@ -99,7 +99,7 @@ pub async fn delete_sys_menu(item: web::Json<DeleteMenuReq>) -> Result<impl Resp
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_sys_menu")]
+#[post("/system/menu/updateMenu")]
 pub async fn update_sys_menu(req: web::Json<UpdateMenuReq>) -> Result<impl Responder> {
     info!("update sys_menu params: {:?}", &req);
     let item = req.0;
@@ -108,7 +108,7 @@ pub async fn update_sys_menu(req: web::Json<UpdateMenuReq>) -> Result<impl Respo
         id: item.id,                     //主键
         menu_name: item.menu_name,       //菜单名称
         menu_type: item.menu_type,       //菜单类型(1：目录   2：菜单   3：按钮)
-        status_id: item.status_id,       //状态(1:正常，0:禁用)
+        status: item.status,             //状态(1:正常，0:禁用)
         sort: item.sort,                 //排序
         parent_id: item.parent_id,       //父ID
         menu_url: item.menu_url,         //路由路径
@@ -142,7 +142,7 @@ pub async fn update_sys_menu(req: web::Json<UpdateMenuReq>) -> Result<impl Respo
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_sys_menu_status")]
+#[post("/system/menu/updateMenuStatus")]
 pub async fn update_sys_menu_status(
     item: web::Json<UpdateMenuStatusReq>,
 ) -> Result<impl Responder> {
@@ -152,7 +152,7 @@ pub async fn update_sys_menu_status(
         Ok(conn) => {
             let result = diesel::update(sys_menu)
                 .filter(id.eq_any(&item.ids))
-                .set(status_id.eq(item.status))
+                .set(status.eq(item.status))
                 .execute(conn);
             match result {
                 Ok(_u) => BaseResponse::<String>::ok_result(),
@@ -171,7 +171,7 @@ pub async fn update_sys_menu_status(
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_sys_menu_detail")]
+#[post("/system/menu/queryMenuDetail")]
 pub async fn query_sys_menu_detail(item: web::Json<QueryMenuDetailReq>) -> Result<impl Responder> {
     info!("query sys_menu_detail params: {:?}", &item);
 
@@ -187,7 +187,7 @@ pub async fn query_sys_menu_detail(item: web::Json<QueryMenuDetailReq>) -> Resul
                         id: x.id,                               //主键
                         menu_name: x.menu_name,                 //菜单名称
                         menu_type: x.menu_type, //菜单类型(1：目录   2：菜单   3：按钮)
-                        status_id: x.status_id, //状态(1:正常，0:禁用)
+                        status: x.status,       //状态(1:正常，0:禁用)
                         sort: x.sort,           //排序
                         parent_id: x.parent_id, //父ID
                         menu_url: x.menu_url,   //路由路径
@@ -224,7 +224,7 @@ pub async fn query_sys_menu_detail(item: web::Json<QueryMenuDetailReq>) -> Resul
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_sys_menu_list")]
+#[post("/system/menu/queryMenuList")]
 pub async fn query_sys_menu_list(item: web::Json<QueryMenuListReq>) -> Result<impl Responder> {
     info!("query sys_menu_list params: {:?}", &item);
 
@@ -244,7 +244,7 @@ pub async fn query_sys_menu_list(item: web::Json<QueryMenuListReq>) -> Result<im
                         id: x.id,                               //主键
                         menu_name: x.menu_name,                 //菜单名称
                         menu_type: x.menu_type, //菜单类型(1：目录   2：菜单   3：按钮)
-                        status_id: x.status_id, //状态(1:正常，0:禁用)
+                        status: x.status,       //状态(1:正常，0:禁用)
                         sort: x.sort,           //排序
                         parent_id: x.parent_id, //父ID
                         menu_url: x.menu_url,   //路由路径

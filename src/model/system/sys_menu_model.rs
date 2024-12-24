@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct AddSysMenu {
     pub menu_name: String,          //菜单名称
     pub menu_type: i8,              //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: i8,              //状态(1:正常，0:禁用)
+    pub status: i8,                 //状态(1:正常，0:禁用)
     pub sort: i32,                  //排序
     pub parent_id: i64,             //父ID
     pub menu_url: Option<String>,   //路由路径
@@ -26,7 +26,7 @@ pub struct UpdateSysMenu {
     pub id: i64,                    //主键
     pub menu_name: String,          //菜单名称
     pub menu_type: i8,              //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: i8,              //状态(1:正常，0:禁用)
+    pub status: i8,                 //状态(1:正常，0:禁用)
     pub sort: i32,                  //排序
     pub parent_id: i64,             //父ID
     pub menu_url: Option<String>,   //路由路径
@@ -54,7 +54,7 @@ pub struct SysMenu {
     pub id: i64,                    //主键
     pub menu_name: String,          //菜单名称
     pub menu_type: i8,              //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: i8,              //状态(1:正常，0:禁用)
+    pub status: i8,                 //状态(1:正常，0:禁用)
     pub sort: i32,                  //排序
     pub parent_id: i64,             //父ID
     pub menu_url: String,           //路由路径

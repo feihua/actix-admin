@@ -23,7 +23,7 @@ use crate::{schema, RB};
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/add_sys_role")]
+#[post("/system/role/addRole")]
 pub async fn add_sys_role(req: web::Json<AddRoleReq>) -> Result<impl Responder> {
     info!("add sys_role params: {:?}", &req);
     let item = req.0;
@@ -59,7 +59,7 @@ pub async fn add_sys_role(req: web::Json<AddRoleReq>) -> Result<impl Responder> 
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/delete_sys_role")]
+#[post("/system/role/deleteRole")]
 pub async fn delete_sys_role(item: web::Json<DeleteRoleReq>) -> Result<impl Responder> {
     info!("delete sys_role params: {:?}", &item);
     match &mut RB.clone().get() {
@@ -103,7 +103,7 @@ pub async fn delete_sys_role(item: web::Json<DeleteRoleReq>) -> Result<impl Resp
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_sys_role")]
+#[post("/system/role/updateRole")]
 pub async fn update_sys_role(req: web::Json<UpdateRoleReq>) -> Result<impl Responder> {
     info!("update sys_role params: {:?}", &req);
     let item = req.0;
@@ -141,7 +141,7 @@ pub async fn update_sys_role(req: web::Json<UpdateRoleReq>) -> Result<impl Respo
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_sys_role_status")]
+#[post("/system/role/updateRoleStatus")]
 pub async fn update_sys_role_status(
     item: web::Json<UpdateRoleStatusReq>,
 ) -> Result<impl Responder> {
@@ -170,34 +170,34 @@ pub async fn update_sys_role_status(
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_sys_role_detail")]
+#[post("/system/role/queryRoleDetail")]
 pub async fn query_sys_role_detail(item: web::Json<QueryRoleDetailReq>) -> Result<impl Responder> {
     info!("query sys_role_detail params: {:?}", &item);
 
     match &mut RB.clone().get() {
         Ok(conn) => {
             let sys_role_sql = sql_query("SELECT * FROM sys_role WHERE id = ?");
-            let result = sys_role_sql.bind::<Bigint, _>(&item.id).get_result::<SysRole>(conn);
+            let result = sys_role_sql
+                .bind::<Bigint, _>(&item.id)
+                .get_result::<SysRole>(conn);
             match result {
-                Ok(x ) => {
+                Ok(x) => {
                     let data = QueryRoleDetailResp {
-                        id: x.id,                                 //主键
-                        role_name: x.role_name,                            //名称
-                        status_id: x.status_id,                            //状态(1:正常，0:禁用)
-                        sort: x.sort,                                      //排序
-                        remark: x.remark,                                  //备注
+                        id: x.id,                               //主键
+                        role_name: x.role_name,                 //名称
+                        status_id: x.status_id,                 //状态(1:正常，0:禁用)
+                        sort: x.sort,                           //排序
+                        remark: x.remark,                       //备注
                         create_time: x.create_time.to_string(), //创建时间
                         update_time: x.update_time.to_string(), //修改时间
                     };
 
                     BaseResponse::<QueryRoleDetailResp>::ok_result_data(data)
                 }
-                Err(err ) => {
-                    BaseResponse::<QueryRoleDetailResp>::err_result_data(
-                        QueryRoleDetailResp::new(),
-                        err.to_string(),
-                    )
-                }
+                Err(err) => BaseResponse::<QueryRoleDetailResp>::err_result_data(
+                    QueryRoleDetailResp::new(),
+                    err.to_string(),
+                ),
             }
         }
         Err(err) => {
@@ -215,7 +215,7 @@ pub async fn query_sys_role_detail(item: web::Json<QueryRoleDetailReq>) -> Resul
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_sys_role_list")]
+#[post("/system/role/queryRoleList")]
 pub async fn query_sys_role_list(item: web::Json<QueryRoleListReq>) -> Result<impl Responder> {
     info!("query sys_role_list params: {:?}", &item);
 
@@ -265,7 +265,7 @@ pub async fn query_sys_role_list(item: web::Json<QueryRoleListReq>) -> Result<im
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_role_menu")]
+#[post("/system/role/queryRoleMenu")]
 pub async fn query_role_menu(
     item: web::Json<QueryRoleMenuReq>,
 ) -> Either<Result<impl Responder>, Result<impl Responder>> {
@@ -333,7 +333,7 @@ pub async fn query_role_menu(
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_role_menu")]
+#[post("/system/role/updateRoleMenu")]
 pub async fn update_role_menu(item: web::Json<UpdateRoleMenuReq>) -> Result<impl Responder> {
     info!("update_role_menu params: {:?}", &item);
 

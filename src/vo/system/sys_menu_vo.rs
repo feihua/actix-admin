@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 pub struct AddMenuReq {
     pub menu_name: String,         //菜单名称
     pub menu_type: i8,             //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: i8,             //状态(1:正常，0:禁用)
+    pub status: i8,                //状态(1:正常，0:禁用)
     pub sort: i32,                 //排序
     pub parent_id: i64,            //父ID
     pub menu_url: Option<String>,  //路由路径
@@ -35,7 +35,7 @@ pub struct UpdateMenuReq {
     pub id: i64,                   //主键
     pub menu_name: String,         //菜单名称
     pub menu_type: i8,             //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: i8,             //状态(1:正常，0:禁用)
+    pub status: i8,                //状态(1:正常，0:禁用)
     pub sort: i32,                 //排序
     pub parent_id: i64,            //父ID
     pub menu_url: Option<String>,  //路由路径
@@ -69,7 +69,7 @@ pub struct QueryMenuDetailResp {
     pub id: i64,             //主键
     pub menu_name: String,   //菜单名称
     pub menu_type: i8,       //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: i8,       //状态(1:正常，0:禁用)
+    pub status: i8,          //状态(1:正常，0:禁用)
     pub sort: i32,           //排序
     pub parent_id: i64,      //父ID
     pub menu_url: String,    //路由路径
@@ -86,7 +86,7 @@ impl QueryMenuDetailResp {
             id: 0,                       //主键
             menu_name: "".to_string(),   //菜单名称
             menu_type: 0,                //菜单类型(1：目录   2：菜单   3：按钮)
-            status_id: 0,                //状态(1:正常，0:禁用)
+            status: 0,                   //状态(1:正常，0:禁用)
             sort: 0,                     //排序
             parent_id: 0,                //父ID
             menu_url: "".to_string(),    //路由路径
@@ -103,19 +103,7 @@ impl QueryMenuDetailResp {
 查询菜单信息列表请求参数
 */
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryMenuListReq {
-    #[serde(rename = "current")]
-    pub page_no: u64,
-    #[serde(rename = "pageSize")]
-    pub page_size: u64,
-    pub menu_name: Option<String>, //菜单名称
-    pub menu_type: Option<i8>,     //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: Option<i8>,     //状态(1:正常，0:禁用)
-    pub parent_id: Option<i64>,    //父ID
-    pub menu_url: Option<String>,  //路由路径
-    pub api_url: Option<String>,   //接口URL
-    pub menu_icon: Option<String>, //菜单图标
-}
+pub struct QueryMenuListReq {}
 
 /*
 查询菜单信息列表响应参数
@@ -125,7 +113,7 @@ pub struct MenuListDataResp {
     pub id: i64,             //主键
     pub menu_name: String,   //菜单名称
     pub menu_type: i8,       //菜单类型(1：目录   2：菜单   3：按钮)
-    pub status_id: i8,       //状态(1:正常，0:禁用)
+    pub status: i8,          //状态(1:正常，0:禁用)
     pub sort: i32,           //排序
     pub parent_id: i64,      //父ID
     pub menu_url: String,    //路由路径

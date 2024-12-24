@@ -6,7 +6,7 @@ diesel::table! {
         #[max_length = 50]
         menu_name -> Varchar,
         menu_type -> Tinyint,
-        status_id -> Tinyint,
+        status -> Tinyint,
         sort -> Integer,
         parent_id -> Bigint,
         #[max_length = 255]

@@ -29,7 +29,7 @@ use crate::{schema, RB};
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/add_sys_user")]
+#[post("/system/user/addUser")]
 pub async fn add_sys_user(req: web::Json<AddUserReq>) -> Result<impl Responder> {
     info!("add sys_user params: {:?}", &req);
     let item = req.0;
@@ -67,7 +67,7 @@ pub async fn add_sys_user(req: web::Json<AddUserReq>) -> Result<impl Responder> 
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/delete_sys_user")]
+#[post("/system/user/deleteUser")]
 pub async fn delete_sys_user(item: web::Json<DeleteUserReq>) -> Result<impl Responder> {
     info!("delete sys_user params: {:?}", &item);
     match &mut RB.clone().get() {
@@ -110,7 +110,7 @@ pub async fn delete_sys_user(item: web::Json<DeleteUserReq>) -> Result<impl Resp
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_sys_user")]
+#[post("/system/user/updateUser")]
 pub async fn update_sys_user(req: web::Json<UpdateUserReq>) -> Result<impl Responder> {
     info!("update sys_user params: {:?}", &req);
     let item = req.0;
@@ -164,7 +164,7 @@ pub async fn update_sys_user(req: web::Json<UpdateUserReq>) -> Result<impl Respo
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_sys_user_status")]
+#[post("/system/user/updateUserStatus")]
 pub async fn update_sys_user_status(
     item: web::Json<UpdateUserStatusReq>,
 ) -> Result<impl Responder> {
@@ -193,7 +193,7 @@ pub async fn update_sys_user_status(
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_user_password")]
+#[post("/system/user/updateUserPassword")]
 pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>) -> Result<impl Responder> {
     info!("update_user_pwd params: {:?}", &item);
 
@@ -237,30 +237,32 @@ pub async fn update_user_password(item: web::Json<UpdateUserPwdReq>) -> Result<i
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_sys_user_detail")]
+#[post("/system/user/queryUserDetail")]
 pub async fn query_sys_user_detail(item: web::Json<QueryUserDetailReq>) -> Result<impl Responder> {
     info!("query sys_user_detail params: {:?}", &item);
 
     match &mut RB.clone().get() {
         Ok(conn) => {
             let sys_user_sql = sql_query("SELECT * FROM sys_user WHERE id = ?");
-            let result = sys_user_sql.bind::<Bigint, _>(&item.id).get_result::<SysUser>(conn);
+            let result = sys_user_sql
+                .bind::<Bigint, _>(&item.id)
+                .get_result::<SysUser>(conn);
             match result {
-                Ok(x ) => {
+                Ok(x) => {
                     let data = QueryUserDetailResp {
-                        id: x.id,                                 //主键
-                        mobile: x.mobile,                                  //手机
-                        user_name: x.user_name,                            //姓名
-                        status_id: x.status_id,                            //状态(1:正常，0:禁用)
-                        sort: x.sort,                                      //排序
-                        remark: x.remark.unwrap_or_default(),              //备注
+                        id: x.id,                               //主键
+                        mobile: x.mobile,                       //手机
+                        user_name: x.user_name,                 //姓名
+                        status_id: x.status_id,                 //状态(1:正常，0:禁用)
+                        sort: x.sort,                           //排序
+                        remark: x.remark.unwrap_or_default(),   //备注
                         create_time: x.create_time.to_string(), //创建时间
                         update_time: x.update_time.to_string(), //修改时间
                     };
 
                     BaseResponse::<QueryUserDetailResp>::ok_result_data(data)
                 }
-                Err(err ) => {
+                Err(err) => {
                     error!("err:{}", err.to_string());
                     BaseResponse::<QueryUserDetailResp>::err_result_data(
                         QueryUserDetailResp::new(),
@@ -284,7 +286,7 @@ pub async fn query_sys_user_detail(item: web::Json<QueryUserDetailReq>) -> Resul
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_sys_user_list")]
+#[post("/system/user/queryUserList")]
 pub async fn query_sys_user_list(item: web::Json<QueryUserListReq>) -> Result<impl Responder> {
     info!("query sys_user_list params: {:?}", &item);
 
@@ -340,7 +342,7 @@ pub async fn query_sys_user_list(item: web::Json<QueryUserListReq>) -> Result<im
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/login")]
+#[post("/system/user/login")]
 pub async fn login(item: web::Json<UserLoginReq>) -> Result<impl Responder> {
     info!("user login params: {:?}", &item);
     match &mut RB.clone().get() {
@@ -449,7 +451,7 @@ fn query_btn_menu(u_id: i64) -> Vec<String> {
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/query_user_role")]
+#[post("/system/user/queryUserRole")]
 pub async fn query_user_role(
     item: web::Json<QueryUserRoleReq>,
 ) -> Either<Result<impl Responder>, Result<impl Responder>> {
@@ -501,7 +503,7 @@ pub async fn query_user_role(
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[post("/update_user_role")]
+#[post("/system/user/updateUserRole")]
 pub async fn update_user_role(item: web::Json<UpdateUserRoleReq>) -> Result<impl Responder> {
     info!("update_user_role params: {:?}", item);
     let user_role = item.0;
@@ -548,7 +550,7 @@ pub async fn update_user_role(item: web::Json<UpdateUserRoleReq>) -> Result<impl
  *author：刘飞华
  *date：2024/12/20 11:04:01
  */
-#[get("/query_user_menu")]
+#[get("/system/user/queryUserMenu")]
 pub async fn query_user_menu(
     req: HttpRequest,
 ) -> Either<Result<impl Responder>, Result<impl Responder>> {
@@ -642,7 +644,7 @@ pub async fn query_user_menu(
                     }
                     let r: QueryResult<Vec<SysMenu>> = sys_menu
                         .filter(schema::sys_menu::id.eq_any(menu_ids))
-                        .filter(schema::sys_menu::status_id.eq(1))
+                        .filter(schema::sys_menu::status.eq(1))
                         .order(crate::schema::sys_menu::sort.asc())
                         .distinct()
                         .load::<SysMenu>(conn);
