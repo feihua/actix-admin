@@ -19,7 +19,7 @@ use std::collections::HashSet;
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/addUser")]
+#[post("/system/user/addUser")]
 pub async fn add_sys_user(
     item: web::Json<AddUserReq>,
     data: web::Data<AppState>,
@@ -53,7 +53,7 @@ pub async fn add_sys_user(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/deleteUser")]
+#[post("/system/user/deleteUser")]
 pub async fn delete_sys_user(
     item: web::Json<DeleteUserReq>,
     data: web::Data<AppState>,
@@ -77,7 +77,7 @@ pub async fn delete_sys_user(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/updateUser")]
+#[post("/system/user/updateUser")]
 pub async fn update_sys_user(
     item: web::Json<UpdateUserReq>,
     data: web::Data<AppState>,
@@ -119,7 +119,7 @@ pub async fn update_sys_user(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/updateUserStatus")]
+#[post("/system/user/updateUserStatus")]
 pub async fn update_sys_user_status(
     item: web::Json<UpdateUserStatusReq>,
     data: web::Data<AppState>,
@@ -145,7 +145,7 @@ pub async fn update_sys_user_status(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/update_user_password")]
+#[post("/system/user/updateUserPassword")]
 pub async fn update_user_password(
     item: web::Json<UpdateUserPwdReq>,
     data: web::Data<AppState>,
@@ -182,7 +182,7 @@ pub async fn update_user_password(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/queryUserDetail")]
+#[post("/system/user/queryUserDetail")]
 pub async fn query_sys_user_detail(
     item: web::Json<QueryUserDetailReq>,
     data: web::Data<AppState>,
@@ -221,7 +221,7 @@ pub async fn query_sys_user_detail(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/queryUserList")]
+#[post("/system/user/queryUserList")]
 pub async fn query_sys_user_list(
     item: web::Json<QueryUserListReq>,
     data: web::Data<AppState>,
@@ -271,7 +271,7 @@ pub async fn query_sys_user_list(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/login")]
+#[post("/system/user/login")]
 pub async fn login(
     item: web::Json<UserLoginReq>,
     data: web::Data<AppState>,
@@ -365,7 +365,7 @@ async fn query_btn_menu(conn: &DatabaseConnection, id: i64) -> Result<Vec<String
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/query_user_role")]
+#[post("/system/user/queryUserRole")]
 pub async fn query_user_role(
     item: web::Json<QueryUserRoleReq>,
     data: web::Data<AppState>,
@@ -408,7 +408,7 @@ pub async fn query_user_role(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[post("/update_user_role")]
+#[post("/system/user/updateUserRole")]
 pub async fn update_user_role(
     item: web::Json<UpdateUserRoleReq>,
     data: web::Data<AppState>,
@@ -458,7 +458,7 @@ pub async fn update_user_role(
  *author：刘飞华
  *date：2024/12/19 09:12:33
  */
-#[get("/query_user_menu")]
+#[get("/system/user/queryUserMenu")]
 pub async fn query_user_menu(
     req: HttpRequest,
     data: web::Data<AppState>,
@@ -553,7 +553,7 @@ pub async fn query_user_menu(
     let mut sys_menu: HashSet<MenuList> = HashSet::new();
     for y in SysMenu::find()
         .filter(sys_menu::Column::Id.is_in(menu_ids))
-        .filter(sys_menu::Column::StatusId.eq(1))
+        .filter(sys_menu::Column::Status.eq(1))
         .order_by_asc(sys_menu::Column::Sort)
         .all(conn)
         .await

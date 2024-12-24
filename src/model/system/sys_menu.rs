@@ -11,7 +11,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub menu_name: String,
     pub menu_type: i8,
-    pub status_id: i8,
+    pub status: i8,
     pub sort: i32,
     pub parent_id: i64,
     pub menu_url: Option<String>,
