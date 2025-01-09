@@ -1,10 +1,11 @@
 use std::future::{ready, Ready};
 use std::rc::Rc;
 
-use crate::utils::error::WhoUnfollowedError;
+use crate::common::error::WhoUnfollowedError;
 use crate::utils::jwt_util::JWTToken;
 use actix_web::error;
 use actix_web::http::header;
+use actix_web::http::header::HeaderValue;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     Error,
@@ -54,7 +55,7 @@ where
 
     forward_ready!(service);
 
-    fn call(&self, req: ServiceRequest) -> Self::Future {
+    fn call(&self, mut req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
 
         let path = req.path().to_string();
@@ -79,12 +80,12 @@ where
             }
 
             if token.len() <= 0 {
-                let john = json!({
+                let res = json!({
                     "msg": "token不能为空",
                     "code": 2,
                     "path": path
                 });
-                return Err(error::ErrorUnauthorized(john.to_string()));
+                return Err(error::ErrorUnauthorized(res.to_string()));
             }
 
             let jwt_token_e = JWTToken::verify("123", &token);
@@ -116,6 +117,8 @@ where
                     break;
                 }
             }
+            req.headers_mut()
+                .insert("userId".parse().unwrap(), HeaderValue::from(jwt_token.id));
             if flag {
                 let fut = svc.call(req);
                 let res = fut.await?;
@@ -125,12 +128,12 @@ where
                     "Hi from start. You requested path: {:?}",
                     jwt_token.permissions
                 );
-                let john = json!({
+                let res = json!({
                     "msg": "无权限访问",
                     "code": 1,
                     "path": path
                 });
-                Err(error::ErrorUnauthorized(john.to_string()))
+                Err(error::ErrorUnauthorized(res.to_string()))
             }
         });
     }
