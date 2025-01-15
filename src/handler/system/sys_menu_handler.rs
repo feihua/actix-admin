@@ -120,6 +120,20 @@ pub async fn update_sys_menu(
     let rb = &data.batis;
     let req = item.0;
 
+    let result = Menu::select_by_id(rb, &req.id).await;
+    match result {
+        Ok(p) => {
+            if p.is_none() {
+                return BaseResponse::<String>::err_result_msg(
+                    "更新菜单失败,菜单信息不存在".to_string(),
+                );
+            } else {
+                p.unwrap()
+            }
+        }
+        Err(err) => return BaseResponse::<String>::err_result_msg(err.to_string()),
+    };
+
     let res = Menu::select_by_menu_name(rb, &req.menu_name).await;
     match res {
         Ok(opt_menu) => {

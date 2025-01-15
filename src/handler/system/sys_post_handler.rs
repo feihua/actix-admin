@@ -116,6 +116,20 @@ pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<App
     let rb = &data.batis;
     let req = item.0;
 
+
+    let result = Post::select_by_id(rb, &req.id).await;
+
+    match result {
+        Ok(d) => {
+            if d.is_none() {
+                return BaseResponse::<String>::err_result_msg(
+                    "更新岗位失败,岗位不存在".to_string(),
+                );
+            }
+        }
+        Err(err) => return BaseResponse::<String>::err_result_msg(err.to_string()),
+    }
+
     let res_by_name = Post::select_by_name(rb, &req.post_name).await;
     match res_by_name {
         Ok(r) => {

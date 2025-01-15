@@ -78,6 +78,17 @@ pub async fn update_sys_notice(item: web::Json<UpdateNoticeReq>, data: web::Data
     let rb = &data.batis;
     let req = item.0;
 
+    let result = Notice::select_by_id(rb, &req.id).await;
+
+    match result {
+        Ok(d) => {
+            if d.is_none() {
+                return BaseResponse::<String>::err_result_msg("通知公告表不存在".to_string());
+            }
+        }
+        Err(err) => return BaseResponse::<String>::err_result_msg(err.to_string()),
+    };
+
     let res = Notice::select_by_title(rb, &req.notice_title).await;
 
     match res {

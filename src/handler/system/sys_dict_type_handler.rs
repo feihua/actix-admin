@@ -105,6 +105,18 @@ pub async fn update_sys_dict_type(item: web::Json<UpdateDictTypeReq>, data: web:
     let rb = &data.batis;
     let req = item.0;
 
+    let dict_by_id = DictType::select_by_id(rb, &req.dict_id).await;
+    match dict_by_id {
+        Ok(p) => {
+            if p.is_none() {
+                return BaseResponse::<String>::err_result_msg(
+                    "更新字典失败,字典类型不存在".to_string(),
+                );
+            }
+        }
+        Err(err) => return BaseResponse::<String>::err_result_msg(err.to_string()),
+    };
+
     let res_by_type = DictType::select_by_dict_type(rb, &req.dict_type).await;
     match res_by_type {
         Ok(r) => {

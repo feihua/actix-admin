@@ -98,6 +98,18 @@ pub async fn update_sys_dict_data(item: web::Json<UpdateDictDataReq>, data: web:
     let rb = &data.batis;
     let req = item.0;
 
+    let result = DictData::select_by_id(rb, &req.dict_code).await;
+    match result {
+        Ok(r) => {
+            if r.is_none() {
+                return BaseResponse::<String>::err_result_msg(
+                    "更新字典数据失败,字典数据不存在".to_string(),
+                );
+            }
+        }
+        Err(err) => return BaseResponse::<String>::err_result_msg(err.to_string()),
+    }
+
     let res_by_dict_label =
         DictData::select_by_dict_label(rb, &req.dict_type, &req.dict_label).await;
     match res_by_dict_label {
