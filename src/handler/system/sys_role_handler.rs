@@ -396,6 +396,10 @@ pub async fn update_role_menu(
     log::info!("update role_menu params: {:?}", &item);
     let role_id = item.role_id;
 
+    if role_id == 1 {
+        return BaseResponse::<String>::err_result_msg("不能修改超级管理员的角色".to_string());
+    }
+
     let rb = &data.batis;
 
     let role_menu_result = RoleMenu::delete_by_column(rb, "role_id", &role_id).await;
