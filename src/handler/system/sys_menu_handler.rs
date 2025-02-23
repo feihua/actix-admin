@@ -1,7 +1,7 @@
 use crate::AppState;
 use actix_web::{post, web, Responder, Result};
 use rbs::to_value;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_menu_model::{select_count_menu_by_parent_id, Menu};
 use crate::model::system::sys_role_menu_model::select_count_menu_by_menu_id;
@@ -17,7 +17,7 @@ use crate::vo::system::sys_menu_vo::*;
 pub async fn add_sys_menu(
     item: web::Json<AddMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("add sys_menu params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -78,7 +78,7 @@ pub async fn add_sys_menu(
 pub async fn delete_sys_menu(
     item: web::Json<DeleteMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("delete sys_menu params: {:?}", &item);
     let rb = &data.batis;
 
@@ -115,7 +115,7 @@ pub async fn delete_sys_menu(
 pub async fn update_sys_menu(
     item: web::Json<UpdateMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_menu params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -190,7 +190,7 @@ pub async fn update_sys_menu(
 pub async fn update_sys_menu_status(
     item: web::Json<UpdateMenuStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_menu_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -222,7 +222,7 @@ pub async fn update_sys_menu_status(
 pub async fn query_sys_menu_detail(
     item: web::Json<QueryMenuDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_menu_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -272,7 +272,7 @@ pub async fn query_sys_menu_detail(
 pub async fn query_sys_menu_list(
     item: web::Json<QueryMenuListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_menu_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -311,7 +311,7 @@ pub async fn query_sys_menu_list(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/queryMenuList")]
-pub async fn query_sys_menu_list_simple(data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_menu_list_simple(data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     let rb = &data.batis;
 
     let result = Menu::select_menu_list(rb).await;

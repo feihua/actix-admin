@@ -3,7 +3,7 @@ use actix_web::{post, web, Responder, Result};
 use rbatis::plugin::page::PageRequest;
 use rbatis::rbdc::datetime::DateTime;
 use rbs::to_value;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_menu_model::Menu;
 use crate::model::system::sys_role_dept_model::RoleDept;
@@ -27,7 +27,7 @@ use crate::vo::system::sys_user_vo::UserListDataResp;
 pub async fn add_sys_role(
     item: web::Json<AddRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("add sys_role params: {:?}", &item);
     let rb = &data.batis;
 
@@ -82,7 +82,7 @@ pub async fn add_sys_role(
 pub async fn delete_sys_role(
     item: web::Json<DeleteRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("delete sys_role params: {:?}", &item);
     let rb = &data.batis;
 
@@ -144,7 +144,7 @@ pub async fn delete_sys_role(
 pub async fn update_sys_role(
     item: web::Json<UpdateRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_role params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -213,7 +213,7 @@ pub async fn update_sys_role(
 pub async fn update_sys_role_status(
     item: web::Json<UpdateRoleStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_role_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -250,7 +250,7 @@ pub async fn update_sys_role_status(
 pub async fn query_sys_role_detail(
     item: web::Json<QueryRoleDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_role_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -296,7 +296,7 @@ pub async fn query_sys_role_detail(
 pub async fn query_sys_role_list(
     item: web::Json<QueryRoleListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_role_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -341,7 +341,7 @@ pub async fn query_sys_role_list(
 pub async fn query_role_menu(
     item: web::Json<QueryRoleMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query role_menu params: {:?}", &item);
     let rb = &data.batis;
 
@@ -392,7 +392,7 @@ pub async fn query_role_menu(
 pub async fn update_role_menu(
     item: web::Json<UpdateRoleMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update role_menu params: {:?}", &item);
     let role_id = item.role_id;
 
@@ -438,7 +438,7 @@ pub async fn update_role_menu(
 pub async fn query_allocated_list(
     item: web::Json<AllocatedListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update role_menu params: {:?}", &item);
 
     let rb = &data.batis;
@@ -496,7 +496,7 @@ pub async fn query_allocated_list(
 pub async fn query_unallocated_list(
     item: web::Json<UnallocatedListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update role_menu params: {:?}", &item);
 
     let rb = &data.batis;
@@ -554,7 +554,7 @@ pub async fn query_unallocated_list(
 pub async fn cancel_auth_user(
     item: web::Json<CancelAuthUserReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update role_menu params: {:?}", &item);
 
     let rb = &data.batis;
@@ -576,7 +576,7 @@ pub async fn cancel_auth_user(
 pub async fn batch_cancel_auth_user(
     item: web::Json<CancelAuthUserAllReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("cancel auth_user_all params: {:?}", &item);
 
     let rb = &data.batis;
@@ -609,7 +609,7 @@ pub async fn batch_cancel_auth_user(
 pub async fn batch_auth_user(
     item: web::Json<SelectAuthUserAllReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("select all_auth_user params: {:?}", &item);
     let role_id = item.role_id;
 

@@ -1,7 +1,7 @@
 use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
 use crate::AppState;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_login_log_model::{clean_login_log, LoginLog};
 use crate::utils::time_util::time_to_string;
@@ -14,7 +14,7 @@ use crate::vo::system::sys_login_log_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/deleteLoginLog")]
-pub async fn delete_sys_login_log(item: web::Json<DeleteLoginLogReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn delete_sys_login_log(item: web::Json<DeleteLoginLogReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("delete sys_login_log params: {:?}", &item);
     let rb = &data.batis;
 
@@ -32,7 +32,7 @@ pub async fn delete_sys_login_log(item: web::Json<DeleteLoginLogReq>, data: web:
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/cleanLoginLog")]
-pub async fn clean_sys_login_log(data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn clean_sys_login_log(data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("clean sys_login_log ");
     let rb = &data.batis;
 
@@ -50,7 +50,7 @@ pub async fn clean_sys_login_log(data: web::Data<AppState>) -> Result<impl Respo
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/queryLoginLogDetail")]
-pub async fn query_sys_login_log_detail(item: web::Json<QueryLoginLogDetailReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_login_log_detail(item: web::Json<QueryLoginLogDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_login_log_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -99,7 +99,7 @@ pub async fn query_sys_login_log_detail(item: web::Json<QueryLoginLogDetailReq>,
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/queryLoginLogList")]
-pub async fn query_sys_login_log_list(item: web::Json<QueryLoginLogListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_login_log_list(item: web::Json<QueryLoginLogListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_login_log_list params: {:?}", &item);
     let rb = &data.batis;
 

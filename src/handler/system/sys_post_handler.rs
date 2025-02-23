@@ -2,7 +2,7 @@ use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
 use rbs::to_value;
 use crate::AppState;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_post_model::{ Post };
 use crate::model::system::sys_user_post_model::count_user_post_by_id;
@@ -15,7 +15,7 @@ use crate::vo::system::sys_post_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/addPost")]
-pub async fn add_sys_post(item: web::Json<AddPostReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn add_sys_post(item: web::Json<AddPostReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("add sys_post params: {:?}", &item);
     let rb = &data.batis;
 
@@ -70,7 +70,7 @@ pub async fn add_sys_post(item: web::Json<AddPostReq>, data: web::Data<AppState>
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/deletePost")]
-pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("delete sys_post params: {:?}", &item);
     let rb = &data.batis;
 
@@ -111,7 +111,7 @@ pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<App
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/updatePost")]
-pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_post params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -179,7 +179,7 @@ pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<App
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/updatePostStatus")]
-pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_post_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -208,7 +208,7 @@ pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: 
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/queryPostDetail")]
-pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_post_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -250,7 +250,7 @@ pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: we
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/queryPostList")]
-pub async fn query_sys_post_list(item: web::Json<QueryPostListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_post_list(item: web::Json<QueryPostListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_post_list params: {:?}", &item);
     let rb = &data.batis;
 

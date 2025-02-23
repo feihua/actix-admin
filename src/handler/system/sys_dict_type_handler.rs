@@ -2,7 +2,7 @@ use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
 use rbs::to_value;
 use crate::AppState;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_dict_data_model::{count_dict_data_by_type, update_dict_data_type};
 use crate::model::system::sys_dict_type_model::{ DictType };
@@ -15,7 +15,7 @@ use crate::vo::system::sys_dict_type_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/addDictType")]
-pub async fn add_sys_dict_type(item: web::Json<AddDictTypeReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn add_sys_dict_type(item: web::Json<AddDictTypeReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("add sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
 
@@ -57,7 +57,7 @@ pub async fn add_sys_dict_type(item: web::Json<AddDictTypeReq>, data: web::Data<
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/deleteDictType")]
-pub async fn delete_sys_dict_type(item: web::Json<DeleteDictTypeReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn delete_sys_dict_type(item: web::Json<DeleteDictTypeReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("delete sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
 
@@ -100,7 +100,7 @@ pub async fn delete_sys_dict_type(item: web::Json<DeleteDictTypeReq>, data: web:
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/updateDictType")]
-pub async fn update_sys_dict_type(item: web::Json<UpdateDictTypeReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_dict_type(item: web::Json<UpdateDictTypeReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -156,7 +156,7 @@ pub async fn update_sys_dict_type(item: web::Json<UpdateDictTypeReq>, data: web:
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/updateDictTypeStatus")]
-pub async fn update_sys_dict_type_status(item: web::Json<UpdateDictTypeStatusReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_dict_type_status(item: web::Json<UpdateDictTypeStatusReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_dict_type_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -186,7 +186,7 @@ pub async fn update_sys_dict_type_status(item: web::Json<UpdateDictTypeStatusReq
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/queryDictTypeDetail")]
-pub async fn query_sys_dict_type_detail(item: web::Json<QueryDictTypeDetailReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_dict_type_detail(item: web::Json<QueryDictTypeDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_dict_type_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -227,7 +227,7 @@ pub async fn query_sys_dict_type_detail(item: web::Json<QueryDictTypeDetailReq>,
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/queryDictTypeList")]
-pub async fn query_sys_dict_type_list(item: web::Json<QueryDictTypeListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_dict_type_list(item: web::Json<QueryDictTypeListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_dict_type_list params: {:?}", &item);
     let rb = &data.batis;
 

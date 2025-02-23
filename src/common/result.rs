@@ -1,7 +1,7 @@
 use actix_web::web::Json;
-use actix_web::Result;
 use serde::Serialize;
 use std::fmt::Debug;
+use crate::common::error::{AppResult};
 
 // 统一返回vo
 #[derive(Serialize, Debug, Clone)]
@@ -30,7 +30,7 @@ impl<T> BaseResponse<T>
 where
     T: Serialize + Debug + Send,
 {
-    pub fn ok_result() -> Result<Json<BaseResponse<String>>> {
+    pub fn ok_result() -> AppResult<Json<BaseResponse<String>>> {
         Ok(Json(BaseResponse {
             msg: "操作成功".to_string(),
             code: 0,
@@ -38,7 +38,7 @@ where
         }))
     }
 
-    pub fn ok_result_msg(msg: String) -> Result<Json<BaseResponse<String>>> {
+    pub fn ok_result_msg(msg: String) -> AppResult<Json<BaseResponse<String>>> {
         Ok(Json(BaseResponse {
             msg: msg.to_string(),
             code: 0,
@@ -46,7 +46,7 @@ where
         }))
     }
 
-    pub fn ok_result_code(code: i32, msg: String) -> Result<Json<BaseResponse<String>>> {
+    pub fn ok_result_code(code: i32, msg: String) -> AppResult<Json<BaseResponse<String>>> {
         Ok(Json(BaseResponse {
             msg: msg.to_string(),
             code,
@@ -54,7 +54,7 @@ where
         }))
     }
 
-    pub fn ok_result_data(data: T) -> Result<Json<BaseResponse<T>>> {
+    pub fn ok_result_data(data: T) -> AppResult<Json<BaseResponse<T>>> {
         Ok(Json(BaseResponse {
             msg: "操作成功".to_string(),
             code: 0,
@@ -62,7 +62,7 @@ where
         }))
     }
 
-    pub fn err_result_data(data: T, msg: String) -> Result<Json<BaseResponse<T>>> {
+    pub fn err_result_data(data: T, msg: String) -> AppResult<Json<BaseResponse<T>>> {
         Ok(Json(BaseResponse {
             msg: msg.to_string(),
             code: 1,
@@ -70,7 +70,7 @@ where
         }))
     }
 
-    pub fn err_result_msg(msg: String) -> Result<Json<BaseResponse<String>>> {
+    pub fn err_result_msg(msg: String) -> AppResult<Json<BaseResponse<String>>> {
         Ok(Json(BaseResponse {
             msg: msg.to_string(),
             code: 1,
@@ -78,14 +78,14 @@ where
         }))
     }
 
-    pub fn err_result_code(code: i32, msg: String) -> Result<Json<BaseResponse<String>>> {
+    pub fn err_result_code(code: i32, msg: String) -> AppResult<Json<BaseResponse<String>>> {
         Ok(Json(BaseResponse {
             msg: msg.to_string(),
             code,
             data: None,
         }))
     }
-    pub fn ok_result_page(data: T, total: u64) -> Result<Json<ResponsePage<T>>> {
+    pub fn ok_result_page(data: T, total: u64) -> AppResult<Json<ResponsePage<T>>> {
         Ok(Json(ResponsePage {
             msg: "操作成功".to_string(),
             code: 0,
@@ -95,7 +95,7 @@ where
         }))
     }
 
-    pub fn err_result_page(data: T, msg: String) -> Result<Json<ResponsePage<T>>> {
+    pub fn err_result_page(data: T, msg: String) -> AppResult<Json<ResponsePage<T>>> {
         Ok(Json(ResponsePage {
             msg: msg.to_string(),
             code: 1,

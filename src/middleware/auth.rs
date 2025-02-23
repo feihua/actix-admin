@@ -1,7 +1,7 @@
 use std::future::{ready, Ready};
 use std::rc::Rc;
 
-use crate::common::error::WhoUnfollowedError;
+use crate::common::error::AppError;
 use crate::utils::jwt_util::JWTToken;
 use actix_web::error;
 use actix_web::http::header;
@@ -93,7 +93,7 @@ where
                 Ok(data) => data,
                 Err(err) => {
                     let er = match err {
-                        WhoUnfollowedError::JwtTokenError(s) => s,
+                        AppError::JwtTokenError(s) => s,
                         _ => "no math error".to_string(),
                     };
                     let john = json!({

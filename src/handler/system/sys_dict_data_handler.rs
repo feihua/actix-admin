@@ -2,7 +2,7 @@ use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
 use rbs::to_value;
 use crate::AppState;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_dict_data_model::{ DictData };
 use crate::utils::time_util::time_to_string;
@@ -14,7 +14,7 @@ use crate::vo::system::sys_dict_data_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/addDictData")]
-pub async fn add_sys_dict_data(item: web::Json<AddDictDataReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn add_sys_dict_data(item: web::Json<AddDictDataReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("add sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
 
@@ -75,7 +75,7 @@ pub async fn add_sys_dict_data(item: web::Json<AddDictDataReq>, data: web::Data<
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/deleteDictData")]
-pub async fn delete_sys_dict_data(item: web::Json<DeleteDictDataReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn delete_sys_dict_data(item: web::Json<DeleteDictDataReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("delete sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
 
@@ -93,7 +93,7 @@ pub async fn delete_sys_dict_data(item: web::Json<DeleteDictDataReq>, data: web:
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/updateDictData")]
-pub async fn update_sys_dict_data(item: web::Json<UpdateDictDataReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_dict_data(item: web::Json<UpdateDictDataReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -165,7 +165,7 @@ pub async fn update_sys_dict_data(item: web::Json<UpdateDictDataReq>, data: web:
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/updateDictDataStatus")]
-pub async fn update_sys_dict_data_status(item: web::Json<UpdateDictDataStatusReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_dict_data_status(item: web::Json<UpdateDictDataStatusReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_dict_data_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -195,7 +195,7 @@ pub async fn update_sys_dict_data_status(item: web::Json<UpdateDictDataStatusReq
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/queryDictDataDetail")]
-pub async fn query_sys_dict_data_detail(item: web::Json<QueryDictDataDetailReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_dict_data_detail(item: web::Json<QueryDictDataDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_dict_data_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -241,7 +241,7 @@ pub async fn query_sys_dict_data_detail(item: web::Json<QueryDictDataDetailReq>,
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/queryDictDataList")]
-pub async fn query_sys_dict_data_list(item: web::Json<QueryDictDataListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_dict_data_list(item: web::Json<QueryDictDataListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_dict_data_list params: {:?}", &item);
     let rb = &data.batis;
 

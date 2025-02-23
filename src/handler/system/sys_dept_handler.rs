@@ -2,7 +2,7 @@ use crate::AppState;
 use actix_web::{post, web, Responder, Result};
 use rbatis::rbatis_codegen::ops::AsProxy;
 use rbs::to_value;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_dept_model::{
     check_dept_exist_user, select_children_dept_by_id, select_dept_count,
@@ -20,7 +20,7 @@ use crate::vo::system::sys_dept_vo::*;
 pub async fn add_sys_dept(
     item: web::Json<AddDeptReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("add sys_dept params: {:?}", &item);
     let rb = &data.batis;
 
@@ -88,7 +88,7 @@ pub async fn add_sys_dept(
 pub async fn delete_sys_dept(
     item: web::Json<DeleteDeptReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("delete sys_dept params: {:?}", &item);
     let rb = &data.batis;
 
@@ -121,7 +121,7 @@ pub async fn delete_sys_dept(
 pub async fn update_sys_dept(
     item: web::Json<UpdateDeptReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_dept params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -244,7 +244,7 @@ pub async fn update_sys_dept(
 pub async fn update_sys_dept_status(
     item: web::Json<UpdateDeptStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_dept_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -301,7 +301,7 @@ pub async fn update_sys_dept_status(
 pub async fn query_sys_dept_detail(
     item: web::Json<QueryDeptDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_dept_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -350,7 +350,7 @@ pub async fn query_sys_dept_detail(
 pub async fn query_sys_dept_list(
     item: web::Json<QueryDeptListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_dept_list params: {:?}", &item);
     let rb = &data.batis;
 

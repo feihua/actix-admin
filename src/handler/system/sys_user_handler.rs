@@ -1,4 +1,4 @@
-use crate::common::error::WhoUnfollowedError;
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_dept_model::Dept;
 use crate::model::system::sys_login_log_model::LoginLog;
@@ -29,7 +29,7 @@ use std::collections::{HashMap, HashSet};
 pub async fn add_sys_user(
     item: web::Json<AddUserReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("add sys_user params: {:?}", &item);
     let rb = &data.batis;
 
@@ -121,7 +121,7 @@ pub async fn delete_sys_user(
     http_req: HttpRequest,
     item: web::Json<DeleteUserReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("delete sys_user params: {:?}", &item);
     let rb = &data.batis;
 
@@ -173,7 +173,7 @@ pub async fn delete_sys_user(
 pub async fn update_sys_user(
     item: web::Json<UpdateUserReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_user params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -280,7 +280,7 @@ pub async fn update_sys_user(
 pub async fn update_sys_user_status(
     item: web::Json<UpdateUserStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_user_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -318,7 +318,7 @@ pub async fn update_sys_user_status(
 pub async fn reset_sys_user_password(
     item: web::Json<ResetUserPwdReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("reset sys_user_password params: {:?}", &item);
 
     let rb = &data.batis;
@@ -358,7 +358,7 @@ pub async fn update_sys_user_password(
     http_req: HttpRequest,
     item: web::Json<UpdateUserPwdReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update sys_user_password params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -406,7 +406,7 @@ pub async fn update_sys_user_password(
 pub async fn query_sys_user_detail(
     item: web::Json<QueryUserDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_user_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -501,7 +501,7 @@ pub async fn query_sys_user_detail(
 pub async fn query_sys_user_list(
     item: web::Json<QueryUserListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query sys_user_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -555,7 +555,7 @@ pub async fn login(
     http_request: HttpRequest,
     item: web::Json<UserLoginReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("user login params: {:?}, {:?}", &item, data.batis);
     let rb = &data.batis;
 
@@ -624,7 +624,7 @@ pub async fn login(
                     }
                     Err(err) => {
                         let er = match err {
-                            WhoUnfollowedError::JwtTokenError(s) => s,
+                            AppError::JwtTokenError(s) => s,
                             _ => "no math error".to_string(),
                         };
                         add_login_log(rb, req.mobile, 0, "生成token异常".to_string(), agent).await;
@@ -711,7 +711,7 @@ async fn query_btn_menu(id: &i64, rb: RBatis) -> Vec<String> {
 pub async fn query_user_role(
     item: web::Json<QueryUserRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("query user_role params: {:?}", item);
     let rb = &data.batis;
 
@@ -756,7 +756,7 @@ pub async fn query_user_role(
 pub async fn update_user_role(
     item: web::Json<UpdateUserRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     log::info!("update_user_role params: {:?}", item);
     let rb = &data.batis;
 
@@ -802,7 +802,7 @@ pub async fn update_user_role(
 pub async fn query_user_menu(
     req: HttpRequest,
     data: web::Data<AppState>,
-) -> Result<impl Responder> {
+) -> Result<impl Responder, AppError> {
     let rb = &data.batis;
 
     let user_id = req

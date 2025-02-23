@@ -2,7 +2,7 @@ use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
 use rbs::to_value;
 use crate::AppState;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_notice_model::{ Notice };
 use crate::utils::time_util::time_to_string;
@@ -14,20 +14,14 @@ use crate::vo::system::sys_notice_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/notice/addNotice")]
-pub async fn add_sys_notice(item: web::Json<AddNoticeReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn add_sys_notice(item: web::Json<AddNoticeReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("add sys_notice params: {:?}", &item);
     let rb = &data.batis;
 
     let req = item.0;
 
-    let res = Notice::select_by_title(rb, &req.notice_title).await;
-    match res {
-        Ok(r) => {
-            if r.is_some() {
-                return BaseResponse::<String>::err_result_msg("公告标题已存在".to_string());
-            }
-        }
-        Err(err) => return BaseResponse::<String>::err_result_msg(err.to_string()),
+    if Notice::select_by_title(rb, &req.notice_title).await?.is_some() {
+        return BaseResponse::<String>::err_result_msg("公告标题已存在".to_string());
     }
 
     let sys_notice = Notice {
@@ -55,7 +49,7 @@ pub async fn add_sys_notice(item: web::Json<AddNoticeReq>, data: web::Data<AppSt
  *date：2025/01/08 17:16:44
  */
 #[post("/system/notice/deleteNotice")]
-pub async fn delete_sys_notice(item: web::Json<DeleteNoticeReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn delete_sys_notice(item: web::Json<DeleteNoticeReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("delete sys_notice params: {:?}", &item);
     let rb = &data.batis;
 
@@ -73,7 +67,7 @@ pub async fn delete_sys_notice(item: web::Json<DeleteNoticeReq>, data: web::Data
  *date：2025/01/08 17:16:44
  */
 #[post("/system/notice/updateNotice")]
-pub async fn update_sys_notice(item: web::Json<UpdateNoticeReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_notice(item: web::Json<UpdateNoticeReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_notice params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -125,7 +119,7 @@ pub async fn update_sys_notice(item: web::Json<UpdateNoticeReq>, data: web::Data
  *date：2025/01/08 17:16:44
  */
 #[post("/system/notice/updateNoticeStatus")]
-pub async fn update_sys_notice_status(item: web::Json<UpdateNoticeStatusReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn update_sys_notice_status(item: web::Json<UpdateNoticeStatusReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("update sys_notice_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -154,7 +148,7 @@ pub async fn update_sys_notice_status(item: web::Json<UpdateNoticeStatusReq>, da
  *date：2025/01/08 17:16:44
  */
 #[post("/system/notice/queryNoticeDetail")]
-pub async fn query_sys_notice_detail(item: web::Json<QueryNoticeDetailReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_notice_detail(item: web::Json<QueryNoticeDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_notice_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -196,7 +190,7 @@ pub async fn query_sys_notice_detail(item: web::Json<QueryNoticeDetailReq>, data
  *date：2025/01/08 17:16:44
  */
 #[post("/system/notice/queryNoticeList")]
-pub async fn query_sys_notice_list(item: web::Json<QueryNoticeListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_notice_list(item: web::Json<QueryNoticeListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_notice_list params: {:?}", &item);
     let rb = &data.batis;
 

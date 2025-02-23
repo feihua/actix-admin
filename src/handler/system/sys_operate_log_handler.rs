@@ -1,7 +1,7 @@
 use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
 use crate::AppState;
-
+use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_operate_log_model::{clean_operate_log, OperateLog};
 use crate::utils::time_util::time_to_string;
@@ -14,7 +14,7 @@ use crate::vo::system::sys_operate_log_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/deleteOperateLog")]
-pub async fn delete_sys_operate_log(item: web::Json<DeleteOperateLogReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn delete_sys_operate_log(item: web::Json<DeleteOperateLogReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("delete sys_operate_log params: {:?}", &item);
     let rb = &data.batis;
 
@@ -33,7 +33,7 @@ pub async fn delete_sys_operate_log(item: web::Json<DeleteOperateLogReq>, data: 
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/cleanOperateLog")]
-pub async fn clean_sys_operate_log(data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn clean_sys_operate_log(data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("clean sys_operate_log");
     let rb = &data.batis;
 
@@ -51,7 +51,7 @@ pub async fn clean_sys_operate_log(data: web::Data<AppState>) -> Result<impl Res
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/queryOperateLogDetail")]
-pub async fn query_sys_operate_log_detail(item: web::Json<QueryOperateLogDetailReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_operate_log_detail(item: web::Json<QueryOperateLogDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_operate_log_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -102,7 +102,7 @@ pub async fn query_sys_operate_log_detail(item: web::Json<QueryOperateLogDetailR
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/queryOperateLogList")]
-pub async fn query_sys_operate_log_list(item: web::Json<QueryOperateLogListReq>, data: web::Data<AppState>) -> Result<impl Responder> {
+pub async fn query_sys_operate_log_list(item: web::Json<QueryOperateLogListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
     log::info!("query sys_operate_log_list params: {:?}", &item);
     let rb = &data.batis;
 
