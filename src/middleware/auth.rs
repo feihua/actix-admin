@@ -2,7 +2,7 @@ use std::future::{ready, Ready};
 use std::rc::Rc;
 
 use crate::common::error::AppError;
-use crate::utils::jwt_util::JWTToken;
+use crate::utils::jwt_util::JwtToken;
 use actix_web::error;
 use actix_web::http::header;
 use actix_web::http::header::HeaderValue;
@@ -88,7 +88,7 @@ where
                 return Err(error::ErrorUnauthorized(res.to_string()));
             }
 
-            let jwt_token_e = JWTToken::verify("123", &token);
+            let jwt_token_e = JwtToken::verify("123", &token);
             let jwt_token = match jwt_token_e {
                 Ok(data) => data,
                 Err(err) => {
