@@ -203,19 +203,19 @@ pub async fn update_sys_dept_status(
             }
         }
 
-        let update_sql = format!(
-            "update sys_dept set status = ? where id in ({})",
-            req.ids
-                .iter()
-                .map(|_| "?")
-                .collect::<Vec<&str>>()
-                .join(", ")
-        );
-
-        let mut param = vec![to_value!(req.status)];
-        param.extend(req.ids.iter().map(|&id| to_value!(id)));
-        rb.exec(&update_sql, param).await?;
     }
+    let update_sql = format!(
+        "update sys_dept set status = ? where id in ({})",
+        req.ids
+            .iter()
+            .map(|_| "?")
+            .collect::<Vec<&str>>()
+            .join(", ")
+    );
+
+    let mut param = vec![to_value!(req.status)];
+    param.extend(req.ids.iter().map(|&id| to_value!(id)));
+    rb.exec(&update_sql, param).await?;
     BaseResponse::<String>::ok_result()
 }
 
