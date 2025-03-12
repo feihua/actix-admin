@@ -31,3 +31,4 @@ futures = { version = "0.3", default-features = false }
 thiserror = "2.0.3"
 
 regex = "1.11.1"
+config = "0.15.9"
