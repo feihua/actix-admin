@@ -9,7 +9,7 @@ pub mod route;
 pub mod utils;
 pub mod vo;
 
-use crate::model::db::init_db;
+use utils::db::init_db;
 use actix_web::{get, middleware as md, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, File};
 use middleware::auth;
