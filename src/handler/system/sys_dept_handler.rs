@@ -9,7 +9,7 @@ use crate::vo::system::sys_dept_vo::*;
 use crate::AppState;
 use actix_web::{post, web, Responder, Result};
 use rbatis::rbatis_codegen::ops::AsProxy;
-use rbs::to_value;
+use rbs::value;
 
 /*
  *添加部门表
@@ -84,7 +84,7 @@ pub async fn delete_sys_dept(
         return BaseResponse::<String>::err_result_msg("部门存在用户,不允许删除");
     }
 
-    Dept::delete_by_column(rb, "id", &item.id).await?;
+    Dept::delete_by_map(rb, value! {"id": &item.id}).await?;
 
     BaseResponse::<String>::ok_result()
 }
@@ -131,14 +131,13 @@ pub async fn update_sys_dept(
 
     let list = select_children_dept_by_id(rb, &req.id).await?;
 
-    let mut depts = vec![];
     for mut x in list {
         x.ancestors = x
             .ancestors
             .replace(old_ancestors.as_str(), ancestors.as_str());
-        depts.push(x)
+        Dept::update_by_map(rb, &x,value! {"id": &x.id}).await?;
     }
-    Dept::update_by_column_batch(rb, &depts, "id", depts.len() as u64).await?;
+   
 
     let sys_dept = Dept {
         id: Some(req.id),             //部门id
@@ -155,7 +154,7 @@ pub async fn update_sys_dept(
         update_time: None,            //修改时间
     };
 
-    Dept::update_by_column(rb, &sys_dept, "id").await?;
+    Dept::update_by_map(rb, &sys_dept, value! {"id": &sys_dept.id}).await?;
 
     if req.status == 1 && sys_dept.ancestors != "0" {
         let ids = ancestors.split(",").map(|s| s.i64()).collect::<Vec<i64>>();
@@ -165,8 +164,8 @@ pub async fn update_sys_dept(
             ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", ")
         );
 
-        let mut param = vec![to_value!(req.status)];
-        param.extend(ids.iter().map(|&id| to_value!(id)));
+        let mut param = vec![value!(req.status)];
+        param.extend(ids.iter().map(|&id| value!(id)));
         rb.exec(&update_sql, param).await?;
     }
     BaseResponse::<String>::ok_result()
@@ -197,8 +196,8 @@ pub async fn update_sys_dept_status(
                     ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", ")
                 );
 
-                let mut param = vec![to_value!(req.status)];
-                param.extend(ids.iter().map(|&id| to_value!(id)));
+                let mut param = vec![value!(req.status)];
+                param.extend(ids.iter().map(|&id| value!(id)));
                 rb.exec(&update_sql, param).await?;
             }
         }
@@ -213,8 +212,8 @@ pub async fn update_sys_dept_status(
             .join(", ")
     );
 
-    let mut param = vec![to_value!(req.status)];
-    param.extend(req.ids.iter().map(|&id| to_value!(id)));
+    let mut param = vec![value!(req.status)];
+    param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
     BaseResponse::<String>::ok_result()
 }

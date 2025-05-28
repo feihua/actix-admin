@@ -6,7 +6,7 @@ use crate::vo::system::sys_dict_data_vo::*;
 use crate::AppState;
 use actix_web::{post, web, Responder, Result};
 use rbatis::plugin::page::PageRequest;
-use rbs::to_value;
+use rbs::value;
 
 /*
  *添加字典数据表
@@ -69,7 +69,7 @@ pub async fn delete_sys_dict_data(
     log::info!("delete sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
 
-    DictData::delete_in_column(rb, "dict_code", &item.ids).await?;
+    DictData::delete_by_map(rb, value! {"dict_code": &item.ids}).await?;
     BaseResponse::<String>::ok_result()
 }
 
@@ -118,7 +118,7 @@ pub async fn update_sys_dict_data(
         update_time: None,                      //修改时间
     };
 
-    DictData::update_by_column(rb, &sys_dict_data, "dict_code").await?;
+    DictData::update_by_map(rb, &sys_dict_data, value! {"dict_code": &sys_dict_data.dict_code}).await?;
     BaseResponse::<String>::ok_result()
 }
 
@@ -145,8 +145,8 @@ pub async fn update_sys_dict_data_status(
             .join(", ")
     );
 
-    let mut param = vec![to_value!(req.status)];
-    param.extend(req.ids.iter().map(|&id| to_value!(id)));
+    let mut param = vec![value!(req.status)];
+    param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
     BaseResponse::<String>::ok_result()
 }

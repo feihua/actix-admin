@@ -1,6 +1,6 @@
 use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
-use rbs::to_value;
+use rbs::value;
 use crate::AppState;
 use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
@@ -71,7 +71,7 @@ pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<App
         }
     }
 
-    Post::delete_in_column(rb, "id", &item.ids).await?;
+    Post::delete_by_map(rb, value! {"id": &item.ids}).await?;
 
     BaseResponse::<String>::ok_result()
 }
@@ -114,7 +114,7 @@ pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<App
         update_time: None,                       //更新时间
     };
 
-    Post::update_by_column(rb, &sys_post, "id").await?;
+    Post::update_by_map(rb, &sys_post, value! {"id": &sys_post.id}).await?;
 
     BaseResponse::<String>::ok_result()
 }
@@ -139,8 +139,8 @@ pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: 
             .join(", ")
     );
 
-    let mut param = vec![to_value!(req.status)];
-    param.extend(req.ids.iter().map(|&id| to_value!(id)));
+    let mut param = vec![value!(req.status)];
+    param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
 
     BaseResponse::<String>::ok_result()
@@ -158,10 +158,10 @@ pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: we
 
     match Post::select_by_id(rb, &item.id).await? {
         None => {
-            return BaseResponse::<QueryPostDetailResp>::err_result_data(
+             BaseResponse::<QueryPostDetailResp>::err_result_data(
                 QueryPostDetailResp::new(),
                 "岗位不存在",
-            );
+            )
         }
         Some(x) => {
             let sys_post = QueryPostDetailResp {

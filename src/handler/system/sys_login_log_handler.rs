@@ -1,5 +1,6 @@
 use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
+use rbs::value;
 use crate::AppState;
 use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
@@ -18,7 +19,7 @@ pub async fn delete_sys_login_log(item: web::Json<DeleteLoginLogReq>, data: web:
     log::info!("delete sys_login_log params: {:?}", &item);
     let rb = &data.batis;
 
-    LoginLog::delete_in_column(rb, "id", &item.ids).await?;
+    LoginLog::delete_by_map(rb, value! {"id": &item.ids}).await?;
     BaseResponse::<String>::ok_result()
 }
 

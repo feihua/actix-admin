@@ -1,5 +1,6 @@
 use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
+use rbs::value;
 use crate::AppState;
 use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
@@ -18,7 +19,7 @@ pub async fn delete_sys_operate_log(item: web::Json<DeleteOperateLogReq>, data: 
     log::info!("delete sys_operate_log params: {:?}", &item);
     let rb = &data.batis;
 
-    OperateLog::delete_in_column(rb, "id", &item.ids).await?;
+    OperateLog::delete_by_map(rb, value! {"id": &item.ids}).await?;
     BaseResponse::<String>::ok_result()
 }
 

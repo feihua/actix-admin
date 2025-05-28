@@ -1,6 +1,6 @@
 use actix_web::{post, Responder, Result, web};
 use rbatis::plugin::page::PageRequest;
-use rbs::to_value;
+use rbs::value;
 use crate::AppState;
 use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
@@ -50,7 +50,7 @@ pub async fn delete_sys_notice(item: web::Json<DeleteNoticeReq>, data: web::Data
     log::info!("delete sys_notice params: {:?}", &item);
     let rb = &data.batis;
 
-    Notice::delete_in_column(rb, "id", &item.ids).await?;
+    Notice::delete_by_map(rb, value! {"id": &item.ids}).await?;
     BaseResponse::<String>::ok_result()
 }
 
@@ -86,7 +86,7 @@ pub async fn update_sys_notice(item: web::Json<UpdateNoticeReq>, data: web::Data
         update_time: None,                       //修改时间
     };
 
-    Notice::update_by_column(rb, &sys_notice, "id").await?;
+    Notice::update_by_map(rb, &sys_notice, value! {"id": &sys_notice.id}).await?;
     BaseResponse::<String>::ok_result()
 }
 
@@ -110,8 +110,8 @@ pub async fn update_sys_notice_status(item: web::Json<UpdateNoticeStatusReq>, da
             .join(", ")
     );
 
-    let mut param = vec![to_value!(req.status)];
-    param.extend(req.ids.iter().map(|&id| to_value!(id)));
+    let mut param = vec![value!(req.status)];
+    param.extend(req.ids.iter().map(|&id| value!(id)));
 
     rb.exec(&update_sql, param).await?;
     BaseResponse::<String>::ok_result()

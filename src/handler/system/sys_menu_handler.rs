@@ -1,6 +1,6 @@
 use crate::AppState;
 use actix_web::{post, web, Responder, Result};
-use rbs::to_value;
+use rbs::value;
 use crate::common::error::AppError;
 use crate::common::result::BaseResponse;
 use crate::model::system::sys_menu_model::{select_count_menu_by_parent_id, Menu};
@@ -80,7 +80,7 @@ pub async fn delete_sys_menu(
         return BaseResponse::<String>::err_result_msg("菜单已分配,不允许删除");
     }
 
-    Menu::delete_by_column(rb, "id", &item.id).await?;
+    Menu::delete_by_map(rb, value! {"id": &item.id}).await?;
 
     BaseResponse::<String>::ok_result()
 }
@@ -134,7 +134,7 @@ pub async fn update_sys_menu(
         update_time: None,         //修改时间
     };
 
-    Menu::update_by_column(rb, &sys_menu, "id").await?;
+    Menu::update_by_map(rb, &sys_menu, value! {"id": &sys_menu.id}).await?;
 
     BaseResponse::<String>::ok_result()
 }
@@ -162,8 +162,8 @@ pub async fn update_sys_menu_status(
             .join(", ")
     );
 
-    let mut param = vec![to_value!(req.status)];
-    param.extend(req.ids.iter().map(|&id| to_value!(id)));
+    let mut param = vec![value!(req.status)];
+    param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
 
     BaseResponse::<String>::ok_result()
@@ -184,10 +184,10 @@ pub async fn query_sys_menu_detail(
 
     match Menu::select_by_id(rb, &item.id).await? {
         None => {
-            return BaseResponse::<QueryMenuDetailResp>::err_result_data(
+             BaseResponse::<QueryMenuDetailResp>::err_result_data(
                 QueryMenuDetailResp::new(),
                 "菜单信息不存在",
-            );
+            )
         }
         Some(x) => {
             let sys_menu = QueryMenuDetailResp {
