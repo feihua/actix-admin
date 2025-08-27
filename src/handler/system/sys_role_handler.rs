@@ -1,10 +1,10 @@
 use crate::AppState;
-use actix_web::{post, web, Responder, Result};
+use actix_web::{post, web, Responder};
 use rbatis::plugin::page::PageRequest;
 use rbatis::rbdc::datetime::DateTime;
 use rbs::value;
-use crate::common::error::AppError;
-use crate::common::result::BaseResponse;
+use crate::common::error::{AppError, AppResult};
+use crate::common::result::{ok_result, ok_result_data, ok_result_page};
 use crate::model::system::sys_menu_model::Menu;
 use crate::model::system::sys_role_dept_model::RoleDept;
 use crate::model::system::sys_role_menu_model::{query_menu_by_role, RoleMenu};
@@ -27,7 +27,7 @@ use crate::vo::system::sys_user_vo::UserListDataResp;
 pub async fn add_sys_role(
     item: web::Json<AddRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("add sys_role params: {:?}", &item);
     let rb = &data.batis;
 
@@ -35,12 +35,12 @@ pub async fn add_sys_role(
 
     let name = req.role_name;
     if Role::select_by_role_name(rb, &name).await?.is_some() {
-        return BaseResponse::<String>::err_result_msg("角色名称已存在");
+        return Err(AppError::BusinessError("角色名称已存在"));
     }
 
     let key = req.role_key;
     if Role::select_by_role_key(rb, &key).await?.is_some() {
-        return BaseResponse::<String>::err_result_msg("角色权限已存在");
+        return Err(AppError::BusinessError("角色权限已存在"));
     }
 
     let sys_role = Role {
@@ -57,7 +57,7 @@ pub async fn add_sys_role(
 
     Role::insert(rb, &sys_role).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -69,28 +69,19 @@ pub async fn add_sys_role(
 pub async fn delete_sys_role(
     item: web::Json<DeleteRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("delete sys_role params: {:?}", &item);
     let rb = &data.batis;
 
     let ids = item.ids.clone();
 
     if ids.contains(&1) {
-        return BaseResponse::<String>::err_result_msg("不允许操作超级管理员角色");
+        return Err(AppError::BusinessError("不允许操作超级管理员角色"));
     }
 
     for id in ids {
-        let role_result = Role::select_by_id(rb, &id).await?;
-        let role = match role_result {
-            None => {
-                return BaseResponse::<String>::err_result_msg("角色不存在,不能删除");
-            }
-            Some(x) => x,
-        };
-
         if count_user_role_by_role_id(rb, id).await? > 0 {
-            let msg = format!("{}已分配,不能删除", role.role_name);
-            return BaseResponse::<String>::err_result_msg(msg.as_str());
+            return Err(AppError::BusinessError("已分配,不能删除"));
         }
     }
 
@@ -99,7 +90,7 @@ pub async fn delete_sys_role(
     RoleDept::delete_by_map(rb, value! {"role_id": &item.ids}).await?;
 
     Role::delete_by_map(rb, value! {"id": &item.ids}).await?;
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -111,28 +102,28 @@ pub async fn delete_sys_role(
 pub async fn update_sys_role(
     item: web::Json<UpdateRoleReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_role params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     if req.id == 1 {
-        return BaseResponse::<String>::err_result_msg("不允许操作超级管理员角色");
+        return Err(AppError::BusinessError("不允许操作超级管理员角色"));
     }
 
     if Role::select_by_id(rb, &req.id).await?.is_none() {
-        return BaseResponse::<String>::err_result_msg("角色不存在");
+        return Err(AppError::BusinessError("角色不存在"));
     }
 
     if let Some(x) = Role::select_by_role_name(rb, &req.role_name).await? {
         if x.id.unwrap_or_default() != req.id {
-            return BaseResponse::<String>::err_result_msg("角色名称已存在");
+            return Err(AppError::BusinessError("角色名称已存在"));
         }
     }
 
     if let Some(x) = Role::select_by_role_key(rb, &req.role_key).await? {
         if x.id.unwrap_or_default() != req.id {
-            return BaseResponse::<String>::err_result_msg("角色权限已存在");
+            return Err(AppError::BusinessError("角色权限已存在"));
         }
     }
 
@@ -150,7 +141,7 @@ pub async fn update_sys_role(
 
     Role::update_by_map(rb, &sys_role, value! {"id": &sys_role.id}).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -162,13 +153,13 @@ pub async fn update_sys_role(
 pub async fn update_sys_role_status(
     item: web::Json<UpdateRoleStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_role_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     if req.ids.contains(&1) {
-        return BaseResponse::<String>::err_result_msg("不允许操作超级管理员角色");
+        return Err(AppError::BusinessError("不允许操作超级管理员角色"));
     }
 
     let update_sql = format!(
@@ -184,7 +175,7 @@ pub async fn update_sys_role_status(
     param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -196,17 +187,12 @@ pub async fn update_sys_role_status(
 pub async fn query_sys_role_detail(
     item: web::Json<QueryRoleDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_role_detail params: {:?}", &item);
     let rb = &data.batis;
 
     match Role::select_by_id(rb, &item.id).await? {
-        None => {
-            BaseResponse::<QueryRoleDetailResp>::err_result_data(
-                QueryRoleDetailResp::new(),
-                "角色不存在",
-            )
-        }
+        None => Err(AppError::BusinessError("角色不存在")),
         Some(x) => {
             let sys_role = QueryRoleDetailResp {
                 id: x.id.unwrap_or_default(),               //主键
@@ -220,7 +206,7 @@ pub async fn query_sys_role_detail(
                 update_time: time_to_string(x.update_time), //修改时间
             };
 
-            BaseResponse::<QueryRoleDetailResp>::ok_result_data(sys_role)
+            ok_result_data(sys_role)
         }
     }
 }
@@ -234,7 +220,7 @@ pub async fn query_sys_role_detail(
 pub async fn query_sys_role_list(
     item: web::Json<QueryRoleListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_role_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -262,7 +248,7 @@ pub async fn query_sys_role_list(
         })
     }
 
-    BaseResponse::ok_result_page(sys_role_list_data, total)
+    ok_result_page(sys_role_list_data, total)
 }
 
 /*
@@ -274,7 +260,7 @@ pub async fn query_sys_role_list(
 pub async fn query_role_menu(
     item: web::Json<QueryRoleMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query role_menu params: {:?}", &item);
     let rb = &data.batis;
 
@@ -308,7 +294,7 @@ pub async fn query_role_menu(
         }
     }
 
-    BaseResponse::<QueryRoleMenuData>::ok_result_data(QueryRoleMenuData {
+    ok_result_data(QueryRoleMenuData {
         menu_ids,
         menu_list,
     })
@@ -323,12 +309,12 @@ pub async fn query_role_menu(
 pub async fn update_role_menu(
     item: web::Json<UpdateRoleMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update role_menu params: {:?}", &item);
     let role_id = item.role_id;
 
     if role_id == 1 {
-        return BaseResponse::<String>::err_result_msg("不允许操作超级管理员角色");
+        return Err(AppError::BusinessError("不允许操作超级管理员角色"));
     }
 
     let rb = &data.batis;
@@ -349,7 +335,7 @@ pub async fn update_role_menu(
 
     RoleMenu::insert_batch(rb, &role_menu, item.menu_ids.len() as u64).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -361,7 +347,7 @@ pub async fn update_role_menu(
 pub async fn query_allocated_list(
     item: web::Json<AllocatedListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update role_menu params: {:?}", &item);
 
     let rb = &data.batis;
@@ -400,7 +386,7 @@ pub async fn query_allocated_list(
     }
 
     let total = count_allocated_list(rb, role_id, user_name, mobile).await?;
-    BaseResponse::ok_result_page(sys_user_list_data, total)
+    ok_result_page(sys_user_list_data, total)
 }
 
 /*
@@ -412,7 +398,7 @@ pub async fn query_allocated_list(
 pub async fn query_unallocated_list(
     item: web::Json<UnallocatedListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update role_menu params: {:?}", &item);
 
     let rb = &data.batis;
@@ -451,7 +437,7 @@ pub async fn query_unallocated_list(
     }
 
     let total = count_unallocated_list(rb, role_id, user_name, mobile).await?;
-    BaseResponse::ok_result_page(sys_user_list_data, total)
+    ok_result_page(sys_user_list_data, total)
 }
 
 /*
@@ -463,14 +449,14 @@ pub async fn query_unallocated_list(
 pub async fn cancel_auth_user(
     item: web::Json<CancelAuthUserReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update role_menu params: {:?}", &item);
 
     let rb = &data.batis;
 
     delete_user_role_by_role_id_user_id(rb, item.role_id, item.user_id).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -482,7 +468,7 @@ pub async fn cancel_auth_user(
 pub async fn batch_cancel_auth_user(
     item: web::Json<CancelAuthUserAllReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("cancel auth_user_all params: {:?}", &item);
 
     let rb = &data.batis;
@@ -500,7 +486,7 @@ pub async fn batch_cancel_auth_user(
     param.extend(item.user_ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -512,7 +498,7 @@ pub async fn batch_cancel_auth_user(
 pub async fn batch_auth_user(
     item: web::Json<SelectAuthUserAllReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("select all_auth_user params: {:?}", &item);
     let role_id = item.role_id;
 
@@ -532,5 +518,5 @@ pub async fn batch_auth_user(
 
     UserRole::insert_batch(rb, &user_role, item.user_ids.len() as u64).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }

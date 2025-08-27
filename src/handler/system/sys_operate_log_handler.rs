@@ -1,13 +1,12 @@
-use actix_web::{post, Responder, Result, web};
-use rbatis::plugin::page::PageRequest;
-use rbs::value;
-use crate::AppState;
-use crate::common::error::AppError;
-use crate::common::result::BaseResponse;
+use crate::common::error::{AppError, AppResult};
+use crate::common::result::{ok_result, ok_result_data, ok_result_page};
 use crate::model::system::sys_operate_log_model::{clean_operate_log, OperateLog};
 use crate::utils::time_util::time_to_string;
 use crate::vo::system::sys_operate_log_vo::*;
-
+use crate::AppState;
+use actix_web::{post, web, Responder};
+use rbatis::plugin::page::PageRequest;
+use rbs::value;
 
 /*
  *删除操作日志记录
@@ -15,14 +14,16 @@ use crate::vo::system::sys_operate_log_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/deleteOperateLog")]
-pub async fn delete_sys_operate_log(item: web::Json<DeleteOperateLogReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn delete_sys_operate_log(
+    item: web::Json<DeleteOperateLogReq>,
+    data: web::Data<AppState>,
+) -> AppResult<impl Responder> {
     log::info!("delete sys_operate_log params: {:?}", &item);
     let rb = &data.batis;
 
     OperateLog::delete_by_map(rb, value! {"id": &item.ids}).await?;
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
-
 
 /*
  *清空操作日志记录
@@ -30,13 +31,13 @@ pub async fn delete_sys_operate_log(item: web::Json<DeleteOperateLogReq>, data: 
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/cleanOperateLog")]
-pub async fn clean_sys_operate_log(data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn clean_sys_operate_log(data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("clean sys_operate_log");
     let rb = &data.batis;
 
     clean_operate_log(rb).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -45,15 +46,15 @@ pub async fn clean_sys_operate_log(data: web::Data<AppState>) -> Result<impl Res
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/queryOperateLogDetail")]
-pub async fn query_sys_operate_log_detail(item: web::Json<QueryOperateLogDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn query_sys_operate_log_detail(
+    item: web::Json<QueryOperateLogDetailReq>,
+    data: web::Data<AppState>,
+) -> AppResult<impl Responder> {
     log::info!("query sys_operate_log_detail params: {:?}", &item);
     let rb = &data.batis;
 
     match OperateLog::select_by_id(rb, &item.id).await? {
-        None => BaseResponse::<QueryOperateLogDetailResp>::err_result_data(
-            QueryOperateLogDetailResp::new(),
-            "操作日志不存在",
-        ),
+        None => Err(AppError::BusinessError("操作日志不存在")),
         Some(x) => {
             let sys_operate_log = QueryOperateLogDetailResp {
                 id: x.id,                                     //日志主键
@@ -75,10 +76,9 @@ pub async fn query_sys_operate_log_detail(item: web::Json<QueryOperateLogDetailR
                 cost_time: x.cost_time,         //消耗时间
             };
 
-            BaseResponse::<QueryOperateLogDetailResp>::ok_result_data(sys_operate_log)
+            ok_result_data(sys_operate_log)
         }
     }
-
 }
 
 /*
@@ -87,7 +87,10 @@ pub async fn query_sys_operate_log_detail(item: web::Json<QueryOperateLogDetailR
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/queryOperateLogList")]
-pub async fn query_sys_operate_log_list(item: web::Json<QueryOperateLogListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn query_sys_operate_log_list(
+    item: web::Json<QueryOperateLogListReq>,
+    data: web::Data<AppState>,
+) -> AppResult<impl Responder> {
     log::info!("query sys_operate_log_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -117,7 +120,7 @@ pub async fn query_sys_operate_log_list(item: web::Json<QueryOperateLogListReq>,
         operate_ip,
         &status,
     )
-        .await?;
+    .await?;
 
     let mut list: Vec<OperateLogListDataResp> = Vec::new();
 
@@ -145,5 +148,5 @@ pub async fn query_sys_operate_log_list(item: web::Json<QueryOperateLogListReq>,
         })
     }
 
-    BaseResponse::ok_result_page(list, total)
+    ok_result_page(list, total)
 }

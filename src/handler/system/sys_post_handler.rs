@@ -1,9 +1,9 @@
-use actix_web::{post, Responder, Result, web};
+use actix_web::{post, Responder, web};
 use rbatis::plugin::page::PageRequest;
 use rbs::value;
 use crate::AppState;
-use crate::common::error::AppError;
-use crate::common::result::BaseResponse;
+use crate::common::error::{AppError, AppResult};
+use crate::common::result::{ok_result, ok_result_data, ok_result_page};
 use crate::model::system::sys_post_model::{ Post };
 use crate::model::system::sys_user_post_model::count_user_post_by_id;
 use crate::utils::time_util::time_to_string;
@@ -15,18 +15,18 @@ use crate::vo::system::sys_post_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/addPost")]
-pub async fn add_sys_post(item: web::Json<AddPostReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn add_sys_post(item: web::Json<AddPostReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("add sys_post params: {:?}", &item);
     let rb = &data.batis;
 
     let req = item.0;
 
     if Post::select_by_name(rb, &req.post_name).await?.is_some() {
-        return BaseResponse::<String>::err_result_msg("新增岗位失败,岗位名称已存在");
+        return Err(AppError::BusinessError("岗位名称已存在"));
     }
 
     if Post::select_by_code(rb, &req.post_code).await?.is_some() {
-        return BaseResponse::<String>::err_result_msg("新增岗位失败,岗位编码已存在");
+        return Err(AppError::BusinessError("岗位编码已存在"));
     }
 
     let sys_post = Post {
@@ -42,7 +42,7 @@ pub async fn add_sys_post(item: web::Json<AddPostReq>, data: web::Data<AppState>
 
     Post::insert(rb, &sys_post).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -51,29 +51,20 @@ pub async fn add_sys_post(item: web::Json<AddPostReq>, data: web::Data<AppState>
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/deletePost")]
-pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_post params: {:?}", &item);
     let rb = &data.batis;
 
     let ids = item.ids.clone();
     for id in ids {
-        let post_by_id = Post::select_by_id(rb, &id).await?;
-        let p = match post_by_id {
-            None => {
-                return BaseResponse::<String>::err_result_msg("岗位不存在,不能删除");
-            }
-            Some(p) => p,
-        };
-
         if count_user_post_by_id(rb, id).await? > 0 {
-            let msg = format!("{}已分配,不能删除", p.post_name);
-            return BaseResponse::<String>::err_result_msg(msg.as_str());
+            return Err(AppError::BusinessError("已分配,不能删除"));
         }
     }
 
     Post::delete_by_map(rb, value! {"id": &item.ids}).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -82,24 +73,24 @@ pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<App
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/updatePost")]
-pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_post params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     if Post::select_by_id(rb, &req.id).await?.is_none() {
-        return BaseResponse::<String>::err_result_msg("更新岗位失败,岗位不存在");
+        return Err(AppError::BusinessError("岗位不存在"));
     }
 
     if let Some(x) = Post::select_by_name(rb, &req.post_name).await? {
         if x.id.unwrap_or_default() != req.id {
-            return BaseResponse::<String>::err_result_msg("更新岗位失败,岗位名称已存在");
+            return Err(AppError::BusinessError("岗位名称已存在"));
         }
     }
 
     if let Some(x) = Post::select_by_code(rb, &req.post_code).await? {
         if x.id.unwrap_or_default() != req.id {
-            return BaseResponse::<String>::err_result_msg("更新岗位失败,岗位编码已存在");
+            return Err(AppError::BusinessError("岗位编码已存在"));
         }
     }
 
@@ -116,7 +107,7 @@ pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<App
 
     Post::update_by_map(rb, &sys_post, value! {"id": &sys_post.id}).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -125,7 +116,7 @@ pub async fn update_sys_post(item: web::Json<UpdatePostReq>, data: web::Data<App
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/updatePostStatus")]
-pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_post_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -143,7 +134,7 @@ pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: 
     param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -152,17 +143,12 @@ pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: 
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/queryPostDetail")]
-pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_post_detail params: {:?}", &item);
     let rb = &data.batis;
 
     match Post::select_by_id(rb, &item.id).await? {
-        None => {
-             BaseResponse::<QueryPostDetailResp>::err_result_data(
-                QueryPostDetailResp::new(),
-                "岗位不存在",
-            )
-        }
+        None => Err(AppError::BusinessError("岗位不存在")),
         Some(x) => {
             let sys_post = QueryPostDetailResp {
                 id: x.id.unwrap_or_default(),               //岗位id
@@ -175,7 +161,7 @@ pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: we
                 update_time: time_to_string(x.update_time), //更新时间
             };
 
-            BaseResponse::<QueryPostDetailResp>::ok_result_data(sys_post)
+            ok_result_data(sys_post)
         }
     }
 }
@@ -186,7 +172,7 @@ pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: we
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/queryPostList")]
-pub async fn query_sys_post_list(item: web::Json<QueryPostListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn query_sys_post_list(item: web::Json<QueryPostListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_post_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -214,5 +200,5 @@ pub async fn query_sys_post_list(item: web::Json<QueryPostListReq>, data: web::D
         })
     }
 
-    BaseResponse::ok_result_page(list, total)
+    ok_result_page(list, total)
 }

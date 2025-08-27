@@ -1,13 +1,12 @@
-use actix_web::{post, Responder, Result, web};
-use rbatis::plugin::page::PageRequest;
-use rbs::value;
-use crate::AppState;
-use crate::common::error::AppError;
-use crate::common::result::BaseResponse;
+use crate::common::error::{AppError, AppResult};
+use crate::common::result::{ok_result, ok_result_data, ok_result_page};
 use crate::model::system::sys_login_log_model::{clean_login_log, LoginLog};
 use crate::utils::time_util::time_to_string;
 use crate::vo::system::sys_login_log_vo::*;
-
+use crate::AppState;
+use actix_web::{post, web, Responder};
+use rbatis::plugin::page::PageRequest;
+use rbs::value;
 
 /*
  *删除系统访问记录
@@ -15,12 +14,15 @@ use crate::vo::system::sys_login_log_vo::*;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/deleteLoginLog")]
-pub async fn delete_sys_login_log(item: web::Json<DeleteLoginLogReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn delete_sys_login_log(
+    item: web::Json<DeleteLoginLogReq>,
+    data: web::Data<AppState>,
+) -> AppResult<impl Responder> {
     log::info!("delete sys_login_log params: {:?}", &item);
     let rb = &data.batis;
 
     LoginLog::delete_by_map(rb, value! {"id": &item.ids}).await?;
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -29,13 +31,13 @@ pub async fn delete_sys_login_log(item: web::Json<DeleteLoginLogReq>, data: web:
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/cleanLoginLog")]
-pub async fn clean_sys_login_log(data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn clean_sys_login_log(data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("clean sys_login_log ");
     let rb = &data.batis;
 
     clean_login_log(rb).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -44,15 +46,15 @@ pub async fn clean_sys_login_log(data: web::Data<AppState>) -> Result<impl Respo
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/queryLoginLogDetail")]
-pub async fn query_sys_login_log_detail(item: web::Json<QueryLoginLogDetailReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn query_sys_login_log_detail(
+    item: web::Json<QueryLoginLogDetailReq>,
+    data: web::Data<AppState>,
+) -> AppResult<impl Responder> {
     log::info!("query sys_login_log_detail params: {:?}", &item);
     let rb = &data.batis;
 
     match LoginLog::select_by_id(rb, &item.id).await? {
-        None => BaseResponse::<QueryLoginLogDetailResp>::err_result_data(
-            QueryLoginLogDetailResp::new(),
-            "日志不存在",
-        ),
+        None => Err(AppError::BusinessError("日志不存在")),
         Some(x) => {
             let sys_login_log = QueryLoginLogDetailResp {
                 id: x.id.unwrap_or_default(),             //访问ID
@@ -72,10 +74,9 @@ pub async fn query_sys_login_log_detail(item: web::Json<QueryLoginLogDetailReq>,
                 login_time: time_to_string(x.login_time), //访问时间
             };
 
-            BaseResponse::<QueryLoginLogDetailResp>::ok_result_data(sys_login_log)
+            ok_result_data(sys_login_log)
         }
     }
-
 }
 
 /*
@@ -84,7 +85,10 @@ pub async fn query_sys_login_log_detail(item: web::Json<QueryLoginLogDetailReq>,
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/queryLoginLogList")]
-pub async fn query_sys_login_log_list(item: web::Json<QueryLoginLogListReq>, data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn query_sys_login_log_list(
+    item: web::Json<QueryLoginLogListReq>,
+    data: web::Data<AppState>,
+) -> AppResult<impl Responder> {
     log::info!("query sys_login_log_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -121,5 +125,5 @@ pub async fn query_sys_login_log_list(item: web::Json<QueryLoginLogListReq>, dat
         })
     }
 
-    BaseResponse::ok_result_page(list, total)
+    ok_result_page(list, total)
 }

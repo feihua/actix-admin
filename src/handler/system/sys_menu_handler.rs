@@ -1,8 +1,8 @@
 use crate::AppState;
-use actix_web::{post, web, Responder, Result};
+use actix_web::{post, web, Responder};
 use rbs::value;
-use crate::common::error::AppError;
-use crate::common::result::BaseResponse;
+use crate::common::error::{AppError, AppResult};
+use crate::common::result::{ok_result, ok_result_data};
 use crate::model::system::sys_menu_model::{select_count_menu_by_parent_id, Menu};
 use crate::model::system::sys_role_menu_model::select_count_menu_by_menu_id;
 use crate::utils::time_util::time_to_string;
@@ -17,14 +17,14 @@ use crate::vo::system::sys_menu_vo::*;
 pub async fn add_sys_menu(
     item: web::Json<AddMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("add sys_menu params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     let name = req.menu_name;
     if Menu::select_by_menu_name(rb, &name).await?.is_some() {
-        return BaseResponse::<String>::err_result_msg("菜单名称已存在");
+        return Err(AppError::BusinessError("菜单名称已存在"));
     }
 
     let menu_url = req.menu_url.clone();
@@ -33,7 +33,7 @@ pub async fn add_sys_menu(
             .await?
             .is_some()
         {
-            return BaseResponse::<String>::err_result_msg("路由路径已存在");
+            return Err(AppError::BusinessError("路由路径已存在"));
         }
     }
 
@@ -55,7 +55,7 @@ pub async fn add_sys_menu(
 
     Menu::insert(rb, &sys_menu).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -67,22 +67,22 @@ pub async fn add_sys_menu(
 pub async fn delete_sys_menu(
     item: web::Json<DeleteMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("delete sys_menu params: {:?}", &item);
     let rb = &data.batis;
 
     //有下级的时候 不能直接删除
     if select_count_menu_by_parent_id(rb, &item.id).await? > 0 {
-        return BaseResponse::<String>::err_result_msg("存在子菜单,不允许删除");
+        return Err(AppError::BusinessError("存在子菜单,不允许删除"));
     }
 
     if select_count_menu_by_menu_id(rb, &item.id).await? > 0 {
-        return BaseResponse::<String>::err_result_msg("菜单已分配,不允许删除");
+        return Err(AppError::BusinessError("菜单已分配,不允许删除"));
     }
 
     Menu::delete_by_map(rb, value! {"id": &item.id}).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -94,18 +94,18 @@ pub async fn delete_sys_menu(
 pub async fn update_sys_menu(
     item: web::Json<UpdateMenuReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_menu params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     if Menu::select_by_id(rb, &req.id).await?.is_none() {
-        return BaseResponse::<String>::err_result_msg("更新菜单失败,菜单信息不存在");
+        return Err(AppError::BusinessError("菜单信息不存在"));
     }
 
     if let Some(x) = Menu::select_by_menu_name(rb, &req.menu_name).await? {
         if x.id.unwrap_or_default() != req.id {
-            return BaseResponse::<String>::err_result_msg("菜单名称已存在");
+            return Err(AppError::BusinessError("菜单名称已存在"))
         }
     }
 
@@ -113,7 +113,7 @@ pub async fn update_sys_menu(
     if menu_url.is_some() {
         if let Some(x) = Menu::select_by_menu_url(rb, &menu_url.unwrap()).await? {
             if x.id.unwrap_or_default() != req.id {
-                return BaseResponse::<String>::err_result_msg("路由路径已存在");
+                return Err(AppError::BusinessError("路由路径已存在"));
             }
         }
     }
@@ -136,7 +136,7 @@ pub async fn update_sys_menu(
 
     Menu::update_by_map(rb, &sys_menu, value! {"id": &sys_menu.id}).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -148,7 +148,7 @@ pub async fn update_sys_menu(
 pub async fn update_sys_menu_status(
     item: web::Json<UpdateMenuStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_menu_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -166,7 +166,7 @@ pub async fn update_sys_menu_status(
     param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -178,17 +178,12 @@ pub async fn update_sys_menu_status(
 pub async fn query_sys_menu_detail(
     item: web::Json<QueryMenuDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_menu_detail params: {:?}", &item);
     let rb = &data.batis;
 
     match Menu::select_by_id(rb, &item.id).await? {
-        None => {
-             BaseResponse::<QueryMenuDetailResp>::err_result_data(
-                QueryMenuDetailResp::new(),
-                "菜单信息不存在",
-            )
-        }
+        None => Err(AppError::BusinessError("菜单信息不存在")),
         Some(x) => {
             let sys_menu = QueryMenuDetailResp {
                 id: x.id.unwrap_or_default(),               //主键
@@ -206,7 +201,7 @@ pub async fn query_sys_menu_detail(
                 update_time: time_to_string(x.update_time), //修改时间
             };
 
-            BaseResponse::<QueryMenuDetailResp>::ok_result_data(sys_menu)
+            ok_result_data(sys_menu)
         }
     }
 }
@@ -220,7 +215,7 @@ pub async fn query_sys_menu_detail(
 pub async fn query_sys_menu_list(
     item: web::Json<QueryMenuListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_menu_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -245,7 +240,7 @@ pub async fn query_sys_menu_list(
         })
     }
 
-    BaseResponse::ok_result_data(menu_list)
+    ok_result_data(menu_list)
 }
 
 /*
@@ -254,7 +249,7 @@ pub async fn query_sys_menu_list(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/queryMenuList")]
-pub async fn query_sys_menu_list_simple(data: web::Data<AppState>) -> Result<impl Responder, AppError> {
+pub async fn query_sys_menu_list_simple(data: web::Data<AppState>) -> AppResult<impl Responder> {
     let rb = &data.batis;
 
     let list = Menu::select_menu_list(rb).await?;
@@ -268,5 +263,5 @@ pub async fn query_sys_menu_list_simple(data: web::Data<AppState>) -> Result<imp
         })
     }
 
-    BaseResponse::ok_result_data(menu_list)
+    ok_result_data(menu_list)
 }

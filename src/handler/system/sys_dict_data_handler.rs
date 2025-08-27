@@ -1,10 +1,10 @@
-use crate::common::error::AppError;
-use crate::common::result::BaseResponse;
+use crate::common::error::{AppError, AppResult};
+use crate::common::result::{ok_result, ok_result_data, ok_result_page};
 use crate::model::system::sys_dict_data_model::DictData;
 use crate::utils::time_util::time_to_string;
 use crate::vo::system::sys_dict_data_vo::*;
 use crate::AppState;
-use actix_web::{post, web, Responder, Result};
+use actix_web::{post, web, Responder};
 use rbatis::plugin::page::PageRequest;
 use rbs::value;
 
@@ -17,7 +17,7 @@ use rbs::value;
 pub async fn add_sys_dict_data(
     item: web::Json<AddDictDataReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("add sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
 
@@ -27,14 +27,14 @@ pub async fn add_sys_dict_data(
         .await?
         .is_some()
     {
-        return BaseResponse::<String>::err_result_msg("新增字典数据失败,字典标签已存在");
+        return Err(AppError::BusinessError("新增字典数据失败,字典标签已存在"));
     }
 
     if DictData::select_by_dict_value(rb, &req.dict_type, &req.dict_value)
         .await?
         .is_some()
     {
-        return BaseResponse::<String>::err_result_msg("新增字典数据失败,字典键值已存在");
+        return Err(AppError::BusinessError("新增字典数据失败,字典键值已存在"));
     }
 
     let sys_dict_data = DictData {
@@ -53,7 +53,7 @@ pub async fn add_sys_dict_data(
     };
 
     DictData::insert(rb, &sys_dict_data).await?;
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -65,12 +65,12 @@ pub async fn add_sys_dict_data(
 pub async fn delete_sys_dict_data(
     item: web::Json<DeleteDictDataReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("delete sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
 
     DictData::delete_by_map(rb, value! {"dict_code": &item.ids}).await?;
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -82,24 +82,24 @@ pub async fn delete_sys_dict_data(
 pub async fn update_sys_dict_data(
     item: web::Json<UpdateDictDataReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     if DictData::select_by_id(rb, &req.dict_code).await?.is_none() {
-        return BaseResponse::<String>::err_result_msg("更新字典数据失败,字典数据不存在");
+        return Err(AppError::BusinessError("更新字典数据失败,字典数据不存在"));
     }
 
     if let Some(x) = DictData::select_by_dict_label(rb, &req.dict_type, &req.dict_label).await? {
         if x.dict_code.unwrap_or_default() != req.dict_code {
-            return BaseResponse::<String>::err_result_msg("更新字典数据失败,字典标签已存在");
+            return Err(AppError::BusinessError("更新字典数据失败,字典标签已存在"));
         }
     }
 
     if let Some(x) = DictData::select_by_dict_value(rb, &req.dict_type, &req.dict_value).await? {
         if x.dict_code.unwrap_or_default() != req.dict_code {
-            return BaseResponse::<String>::err_result_msg("更新字典数据失败,字典键值已存在");
+            return Err(AppError::BusinessError("更新字典数据失败,字典键值已存在"));
         }
     }
 
@@ -118,8 +118,13 @@ pub async fn update_sys_dict_data(
         update_time: None,                      //修改时间
     };
 
-    DictData::update_by_map(rb, &sys_dict_data, value! {"dict_code": &sys_dict_data.dict_code}).await?;
-    BaseResponse::<String>::ok_result()
+    DictData::update_by_map(
+        rb,
+        &sys_dict_data,
+        value! {"dict_code": &sys_dict_data.dict_code},
+    )
+    .await?;
+    ok_result()
 }
 
 /*
@@ -131,7 +136,7 @@ pub async fn update_sys_dict_data(
 pub async fn update_sys_dict_data_status(
     item: web::Json<UpdateDictDataStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_dict_data_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -148,7 +153,7 @@ pub async fn update_sys_dict_data_status(
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -160,15 +165,12 @@ pub async fn update_sys_dict_data_status(
 pub async fn query_sys_dict_data_detail(
     item: web::Json<QueryDictDataDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_dict_data_detail params: {:?}", &item);
     let rb = &data.batis;
 
     match DictData::select_by_id(rb, &item.id).await? {
-        None => BaseResponse::<QueryDictDataDetailResp>::err_result_data(
-            QueryDictDataDetailResp::new(),
-            "字典数据不存在",
-        ),
+        None => Err(AppError::BusinessError("字典数据不存在")),
         Some(x) => {
             let sys_dict_data = QueryDictDataDetailResp {
                 dict_code: x.dict_code.unwrap_or_default(), //字典编码
@@ -185,7 +187,7 @@ pub async fn query_sys_dict_data_detail(
                 update_time: time_to_string(x.update_time), //修改时间
             };
 
-            BaseResponse::<QueryDictDataDetailResp>::ok_result_data(sys_dict_data)
+            ok_result_data(sys_dict_data)
         }
     }
 }
@@ -199,7 +201,7 @@ pub async fn query_sys_dict_data_detail(
 pub async fn query_sys_dict_data_list(
     item: web::Json<QueryDictDataListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_dict_data_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -231,5 +233,5 @@ pub async fn query_sys_dict_data_list(
         })
     }
 
-    BaseResponse::ok_result_page(list, total)
+    ok_result_page(list, total)
 }

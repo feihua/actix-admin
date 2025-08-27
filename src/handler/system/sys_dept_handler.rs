@@ -1,5 +1,5 @@
-use crate::common::error::AppError;
-use crate::common::result::BaseResponse;
+use crate::common::error::{AppError, AppResult};
+use crate::common::result::{ok_result, ok_result_data};
 use crate::model::system::sys_dept_model::{
     check_dept_exist_user, select_children_dept_by_id, select_dept_count,
     select_normal_children_dept_by_id, Dept,
@@ -7,7 +7,7 @@ use crate::model::system::sys_dept_model::{
 use crate::utils::time_util::time_to_string;
 use crate::vo::system::sys_dept_vo::*;
 use crate::AppState;
-use actix_web::{post, web, Responder, Result};
+use actix_web::{post, web, Responder};
 use rbatis::rbatis_codegen::ops::AsProxy;
 use rbs::value;
 
@@ -20,7 +20,7 @@ use rbs::value;
 pub async fn add_sys_dept(
     item: web::Json<AddDeptReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("add sys_dept params: {:?}", &item);
     let rb = &data.batis;
 
@@ -30,14 +30,14 @@ pub async fn add_sys_dept(
         .await?
         .is_some()
     {
-        return BaseResponse::<String>::err_result_msg("部门名称已存在");
+        return Err(AppError::BusinessError("部门名称已存在"));
     }
 
     let ancestors = match Dept::select_by_id(rb, &req.parent_id).await? {
-        None => return BaseResponse::<String>::err_result_msg("添加失败,上级部门不存在"),
+        None => return Err(AppError::BusinessError("添加失败,上级部门不存在")),
         Some(dept) => {
             if dept.status == 0 {
-                return BaseResponse::<String>::err_result_msg("部门停用，不允许添加");
+                return Err(AppError::BusinessError("部门停用，不允许添加"));
             }
             format!("{},{}", dept.ancestors, &req.parent_id)
         }
@@ -60,7 +60,7 @@ pub async fn add_sys_dept(
 
     Dept::insert(rb, &sys_dept).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -72,21 +72,21 @@ pub async fn add_sys_dept(
 pub async fn delete_sys_dept(
     item: web::Json<DeleteDeptReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("delete sys_dept params: {:?}", &item);
     let rb = &data.batis;
 
     if select_dept_count(rb, &item.id).await? > 0 {
-        return BaseResponse::<String>::err_result_msg("存在下级部门,不允许删除");
+        return Err(AppError::BusinessError("存在下级部门,不允许删除"));
     }
 
     if check_dept_exist_user(rb, &item.id).await? > 0 {
-        return BaseResponse::<String>::err_result_msg("部门存在用户,不允许删除");
+        return Err(AppError::BusinessError("部门存在用户,不允许删除"));
     }
 
     Dept::delete_by_map(rb, value! {"id": &item.id}).await?;
 
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -98,22 +98,22 @@ pub async fn delete_sys_dept(
 pub async fn update_sys_dept(
     item: web::Json<UpdateDeptReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_dept params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     if req.parent_id == req.id {
-        return BaseResponse::<String>::err_result_msg("上级部门不能是自己");
+        return Err(AppError::BusinessError("上级部门不能是自己"));
     }
 
     let old_ancestors = match Dept::select_by_id(rb, &req.id).await? {
-        None => return BaseResponse::<String>::err_result_msg("更新失败,部门不存在"),
+        None => return Err(AppError::BusinessError("更新失败,部门不存在")),
         Some(dept) => dept.ancestors,
     };
 
     let ancestors = match Dept::select_by_id(rb, &req.parent_id).await? {
-        None => return BaseResponse::<String>::err_result_msg("更新失败,上级部门不存在"),
+        None => return Err(AppError::BusinessError("更新失败,上级部门不存在")),
         Some(dept) => {
             format!("{},{}", dept.ancestors, &req.parent_id)
         }
@@ -121,12 +121,12 @@ pub async fn update_sys_dept(
 
     if let Some(x) = Dept::select_by_dept_name(rb, &req.dept_name, req.parent_id).await? {
         if x.id.unwrap_or_default() != req.id {
-            return BaseResponse::<String>::err_result_msg("部门名称已存在");
+            return Err(AppError::BusinessError("部门名称已存在"));
         }
     }
 
     if select_normal_children_dept_by_id(rb, &req.id).await? > 0 && req.status == 0 {
-        return BaseResponse::<String>::err_result_msg("该部门包含未停用的子部门");
+        return Err(AppError::BusinessError("该部门包含未停用的子部门"));
     }
 
     let list = select_children_dept_by_id(rb, &req.id).await?;
@@ -135,9 +135,8 @@ pub async fn update_sys_dept(
         x.ancestors = x
             .ancestors
             .replace(old_ancestors.as_str(), ancestors.as_str());
-        Dept::update_by_map(rb, &x,value! {"id": &x.id}).await?;
+        Dept::update_by_map(rb, &x, value! {"id": &x.id}).await?;
     }
-   
 
     let sys_dept = Dept {
         id: Some(req.id),             //部门id
@@ -168,7 +167,7 @@ pub async fn update_sys_dept(
         param.extend(ids.iter().map(|&id| value!(id)));
         rb.exec(&update_sql, param).await?;
     }
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -180,7 +179,7 @@ pub async fn update_sys_dept(
 pub async fn update_sys_dept_status(
     item: web::Json<UpdateDeptStatusReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("update sys_dept_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -201,7 +200,6 @@ pub async fn update_sys_dept_status(
                 rb.exec(&update_sql, param).await?;
             }
         }
-
     }
     let update_sql = format!(
         "update sys_dept set status = ? where id in ({})",
@@ -215,7 +213,7 @@ pub async fn update_sys_dept_status(
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
     rb.exec(&update_sql, param).await?;
-    BaseResponse::<String>::ok_result()
+    ok_result()
 }
 
 /*
@@ -227,15 +225,12 @@ pub async fn update_sys_dept_status(
 pub async fn query_sys_dept_detail(
     item: web::Json<QueryDeptDetailReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_dept_detail params: {:?}", &item);
     let rb = &data.batis;
 
     match Dept::select_by_id(rb, &item.id).await? {
-        None => BaseResponse::<QueryDeptDetailResp>::err_result_data(
-            QueryDeptDetailResp::new(),
-            "部门不存在",
-        ),
+        None => Err(AppError::BusinessError("部门不存在")),
         Some(x) => {
             let sys_dept = QueryDeptDetailResp {
                 id: x.id.unwrap_or_default(),               //部门id
@@ -252,7 +247,7 @@ pub async fn query_sys_dept_detail(
                 update_time: time_to_string(x.update_time), //修改时间
             };
 
-            BaseResponse::<QueryDeptDetailResp>::ok_result_data(sys_dept)
+            ok_result_data(sys_dept)
         }
     }
 }
@@ -266,7 +261,7 @@ pub async fn query_sys_dept_detail(
 pub async fn query_sys_dept_list(
     item: web::Json<QueryDeptListReq>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, AppError> {
+) -> AppResult<impl Responder> {
     log::info!("query sys_dept_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -292,5 +287,5 @@ pub async fn query_sys_dept_list(
         })
     }
 
-    BaseResponse::ok_result_data(list)
+    ok_result_data(list)
 }
