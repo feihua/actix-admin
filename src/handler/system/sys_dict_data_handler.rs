@@ -23,17 +23,13 @@ pub async fn add_sys_dict_data(
 
     let req = item.0;
 
-    if DictData::select_by_dict_label(rb, &req.dict_type, &req.dict_label)
-        .await?
-        .is_some()
-    {
+    let option = DictData::select_by_dict_label(rb, &req.dict_type, &req.dict_label).await?;
+    if option.is_some() {
         return Err(AppError::BusinessError("新增字典数据失败,字典标签已存在"));
     }
 
-    if DictData::select_by_dict_value(rb, &req.dict_type, &req.dict_value)
-        .await?
-        .is_some()
-    {
+    let detail = DictData::select_by_dict_value(rb, &req.dict_type, &req.dict_value).await?;
+    if detail.is_some() {
         return Err(AppError::BusinessError("新增字典数据失败,字典键值已存在"));
     }
 

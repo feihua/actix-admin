@@ -74,16 +74,13 @@ pub async fn add_sys_user(
         update_time: None,                 //修改时间
     };
 
-    let result = User::insert(rb, &sys_user).await?.last_insert_id;
+    let user_id = User::insert(rb, &sys_user).await?.last_insert_id.i64();
 
-    let mut user_post_list: Vec<UserPost> = Vec::new();
+    let mut batch: Vec<UserPost> = Vec::new();
     for post_id in req.post_ids {
-        user_post_list.push(UserPost {
-            user_id: result.i64(),
-            post_id,
-        })
+        batch.push(UserPost { user_id, post_id })
     }
-    UserPost::insert_batch(rb, &user_post_list, user_post_list.len() as u64).await?;
+    UserPost::insert_batch(rb, &batch, batch.len() as u64).await?;
     ok_result()
 }
 
@@ -143,8 +140,8 @@ pub async fn update_sys_user(
     let rb = &data.batis;
     let req = item.0;
 
-    let id = req.id.clone();
-    if id == 1 {
+    let user_id = req.id.clone();
+    if user_id == 1 {
         return Err(AppError::BusinessError("不允许操作超级管理员用户"));
     }
 
@@ -200,14 +197,11 @@ pub async fn update_sys_user(
     User::update_by_map(rb, &sys_user, value! {"id": &sys_user.id}).await?;
 
     UserPost::delete_by_map(rb, value! {"user_id": &req.id}).await?;
-    let mut user_post_list: Vec<UserPost> = Vec::new();
+    let mut batch: Vec<UserPost> = Vec::new();
     for post_id in req.post_ids {
-        user_post_list.push(UserPost {
-            user_id: sys_user.id.unwrap_or_default(),
-            post_id,
-        })
+        batch.push(UserPost { user_id, post_id })
     }
-    UserPost::insert_batch(rb, &user_post_list, user_post_list.len() as u64).await?;
+    UserPost::insert_batch(rb, &batch, batch.len() as u64).await?;
     ok_result()
 }
 
@@ -412,9 +406,9 @@ pub async fn query_sys_user_list(
     let d = User::select_sys_user_list(rb, page, mobile, user_name, status, dept_id).await?;
 
     let total = d.total;
-    let mut sys_user_list_data: Vec<UserListDataResp> = Vec::new();
+    let mut list: Vec<UserListDataResp> = Vec::new();
     for x in d.records {
-        sys_user_list_data.push(UserListDataResp {
+        list.push(UserListDataResp {
             id: x.id.unwrap_or_default(),                       //主键
             mobile: x.mobile,                                   //手机
             user_name: x.user_name,                             //姓名
@@ -436,7 +430,7 @@ pub async fn query_sys_user_list(
         })
     }
 
-    ok_result_page(sys_user_list_data, total)
+    ok_result_page(list, total)
 }
 
 /*
@@ -725,10 +719,7 @@ pub async fn query_user_menu(
                     parent_id: menu.parent_id,
                     name: menu.menu_name,
                     icon: menu.menu_icon.unwrap_or_default(),
-                    api_url: menu
-                        .api_url
-                        .as_ref()
-                        .map_or_else(|| "".to_string(), |url| url.to_string()),
+                    api_url: menu.api_url.unwrap_or_default(),
                     menu_type: menu.menu_type,
                     path: menu.menu_url.unwrap_or_default(),
                 });

@@ -24,10 +24,8 @@ pub async fn add_sys_dict_type(
 
     let req = item.0;
 
-    if DictType::select_by_dict_type(rb, &req.dict_type)
-        .await?
-        .is_some()
-    {
+    let option = DictType::select_by_dict_type(rb, &req.dict_type).await?;
+    if option.is_some() {
         return Err(AppError::BusinessError("字典类型已存在"));
     }
 
@@ -204,12 +202,12 @@ pub async fn query_sys_dict_type_list(
     let page = &PageRequest::new(item.page_no, item.page_size);
     let d = DictType::select_dict_type_list(rb, page, dict_name, dict_type, status).await?;
 
-    let mut sys_dict_type_list_data: Vec<DictTypeListDataResp> = Vec::new();
+    let mut list: Vec<DictTypeListDataResp> = Vec::new();
 
     let total = d.total;
 
     for x in d.records {
-        sys_dict_type_list_data.push(DictTypeListDataResp {
+        list.push(DictTypeListDataResp {
             dict_id: x.dict_id.unwrap_or_default(),     //字典主键
             dict_name: x.dict_name,                     //字典名称
             dict_type: x.dict_type,                     //字典类型
@@ -220,5 +218,5 @@ pub async fn query_sys_dict_type_list(
         })
     }
 
-    ok_result_page(sys_dict_type_list_data, total)
+    ok_result_page(list, total)
 }

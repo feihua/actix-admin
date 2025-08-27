@@ -1,12 +1,12 @@
-use crate::AppState;
-use actix_web::{post, web, Responder};
-use rbs::value;
 use crate::common::error::{AppError, AppResult};
 use crate::common::result::{ok_result, ok_result_data};
 use crate::model::system::sys_menu_model::{select_count_menu_by_parent_id, Menu};
 use crate::model::system::sys_role_menu_model::select_count_menu_by_menu_id;
 use crate::utils::time_util::time_to_string;
 use crate::vo::system::sys_menu_vo::*;
+use crate::AppState;
+use actix_web::{post, web, Responder};
+use rbs::value;
 
 /*
  *添加菜单信息
@@ -29,17 +29,15 @@ pub async fn add_sys_menu(
 
     let menu_url = req.menu_url.clone();
     if menu_url.is_some() {
-        if Menu::select_by_menu_url(rb, &menu_url.unwrap())
-            .await?
-            .is_some()
-        {
+        let option = Menu::select_by_menu_url(rb, &menu_url.unwrap()).await?;
+        if option.is_some() {
             return Err(AppError::BusinessError("路由路径已存在"));
         }
     }
 
     let sys_menu = Menu {
-        id: None,                                      //主键
-        menu_name: name,                               //菜单名称
+        id: None,                                     //主键
+        menu_name: name,                              //菜单名称
         menu_type: req.menu_type,                     //菜单类型(1：目录   2：菜单   3：按钮)
         visible: req.visible,                         //菜单状态（0:隐藏, 显示:1）
         status: req.status,                           //状态(1:正常，0:禁用)
@@ -49,8 +47,8 @@ pub async fn add_sys_menu(
         api_url: req.api_url,                         //接口URL
         menu_icon: req.menu_icon,                     //菜单图标
         remark: req.remark,                           //备注
-        create_time: None,                             //创建时间
-        update_time: None,                             //修改时间
+        create_time: None,                            //创建时间
+        update_time: None,                            //修改时间
     };
 
     Menu::insert(rb, &sys_menu).await?;
@@ -105,7 +103,7 @@ pub async fn update_sys_menu(
 
     if let Some(x) = Menu::select_by_menu_name(rb, &req.menu_name).await? {
         if x.id.unwrap_or_default() != req.id {
-            return Err(AppError::BusinessError("菜单名称已存在"))
+            return Err(AppError::BusinessError("菜单名称已存在"));
         }
     }
 
@@ -130,8 +128,8 @@ pub async fn update_sys_menu(
         api_url: req.api_url,     //接口URL
         menu_icon: req.menu_icon, //菜单图标
         remark: req.remark,       //备注
-        create_time: None,         //创建时间
-        update_time: None,         //修改时间
+        create_time: None,        //创建时间
+        update_time: None,        //修改时间
     };
 
     Menu::update_by_map(rb, &sys_menu, value! {"id": &sys_menu.id}).await?;

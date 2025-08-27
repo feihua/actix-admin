@@ -26,10 +26,8 @@ pub async fn add_sys_dept(
 
     let req = item.0;
 
-    if Dept::select_by_dept_name(rb, &req.dept_name, req.parent_id)
-        .await?
-        .is_some()
-    {
+    let option = Dept::select_by_dept_name(rb, &req.dept_name, req.parent_id).await?;
+    if option.is_some() {
         return Err(AppError::BusinessError("部门名称已存在"));
     }
 
