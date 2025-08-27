@@ -248,7 +248,7 @@ pub async fn query_sys_menu_list(
  *author：刘飞华
  *date：2025/01/08 17:16:44
  */
-#[post("/system/menu/queryMenuList")]
+#[post("/system/menu/queryMenuListSimple")]
 pub async fn query_sys_menu_list_simple(data: web::Data<AppState>) -> AppResult<impl Responder> {
     let rb = &data.batis;
 
