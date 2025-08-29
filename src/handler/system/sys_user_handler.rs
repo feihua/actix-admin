@@ -662,11 +662,9 @@ pub async fn query_user_menu(
     let user_id = req
         .headers()
         .get("userId")
-        .unwrap()
-        .to_str()
-        .unwrap_or_default()
-        .parse::<i64>()
-        .unwrap_or_default();
+        .and_then(|header| header.to_str().ok())
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(0);
 
     log::info!("query user menu params user_id {:?}", user_id);
 
