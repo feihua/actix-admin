@@ -1,11 +1,11 @@
 // author：刘飞华
 // createTime：2024/12/12 14:41:44
 
+use crate::vo::system::sys_user_vo::{UserReq, UserResp};
 use rbatis::executor::Executor;
 use rbatis::rbdc::datetime::DateTime;
 use rbatis::rbdc::Error;
 use serde::{Deserialize, Serialize};
-use crate::vo::system::sys_user_vo::{UserReq, UserResp};
 /*
  *用户信息
  *author：刘飞华
@@ -19,7 +19,7 @@ pub struct User {
     pub nick_name: String,                 //用户昵称
     pub user_type: Option<String>,         //用户类型（00系统用户）
     pub email: String,                     //用户邮箱
-    pub avatar: Option<String>,                    //头像路径
+    pub avatar: Option<String>,            //头像路径
     pub password: String,                  //密码
     pub status: i8,                        //状态(1:正常，0:禁用)
     pub dept_id: i64,                      //部门ID
@@ -161,14 +161,7 @@ impl_select_page!(User{select_sys_user_list(mobile:&str,user_name:&str,status:i8
                 ` and u.user_name = #{user_name} `
             limit #{page_no},#{page_size}` "
 )]
-async fn select_allocated_list(
-    rb: &dyn Executor,
-    role_id: i64,
-    user_name: &str,
-    mobile: &str,
-    page_no: u64,
-    page_size: u64,
-) -> Result<Vec<User>, Error> {
+async fn select_allocated_list(rb: &dyn Executor, role_id: i64, user_name: &str, mobile: &str, page_no: u64, page_size: u64) -> Result<Vec<User>, Error> {
     impled!()
 }
 
@@ -184,12 +177,7 @@ async fn select_allocated_list(
             if user_name != '':
                 ` and u.user_name = #{user_name} `"
 )]
-async fn count_allocated_list(
-    rb: &dyn Executor,
-    role_id: i64,
-    user_name: &str,
-    mobile: &str,
-) -> Result<u64, Error> {
+async fn count_allocated_list(rb: &dyn Executor, role_id: i64, user_name: &str, mobile: &str) -> Result<u64, Error> {
     impled!()
 }
 
@@ -206,14 +194,7 @@ async fn count_allocated_list(
                 ` and u.user_name = #{user_name} `
             limit #{page_no},#{page_size}` "
 )]
-pub async fn select_unallocated_list(
-    rb: &dyn Executor,
-    role_id: i64,
-    user_name: &str,
-    mobile: &str,
-    page_no: u64,
-    page_size: u64,
-) -> rbatis::Result<Vec<User>> {
+pub async fn select_unallocated_list(rb: &dyn Executor, role_id: i64, user_name: &str, mobile: &str, page_no: u64, page_size: u64) -> rbatis::Result<Vec<User>> {
     impled!()
 }
 
@@ -229,11 +210,6 @@ pub async fn select_unallocated_list(
             if user_name != '':
                 ` and u.user_name = #{user_name} `"
 )]
-pub async fn count_unallocated_list(
-    rb: &dyn Executor,
-    role_id: i64,
-    user_name: &str,
-    mobile: &str,
-) -> rbatis::Result<u64> {
+pub async fn count_unallocated_list(rb: &dyn Executor, role_id: i64, user_name: &str, mobile: &str) -> rbatis::Result<u64> {
     impled!()
 }

@@ -15,10 +15,7 @@ use rbs::value;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/addDictType")]
-pub async fn add_sys_dict_type(
-    item: web::Json<DictTypeReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn add_sys_dict_type(item: web::Json<DictTypeReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("add sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
 
@@ -29,9 +26,7 @@ pub async fn add_sys_dict_type(
         return Err(AppError::BusinessError("字典类型已存在"));
     }
 
-    DictType::insert(rb, &DictType::from(req))
-        .await
-        .map(|_| ok_result())?
+    DictType::insert(rb, &DictType::from(req)).await.map(|_| ok_result())?
 }
 
 /*
@@ -40,10 +35,7 @@ pub async fn add_sys_dict_type(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/deleteDictType")]
-pub async fn delete_sys_dict_type(
-    item: web::Json<DeleteDictTypeReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn delete_sys_dict_type(item: web::Json<DeleteDictTypeReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
 
@@ -59,9 +51,7 @@ pub async fn delete_sys_dict_type(
         }
     }
 
-    DictType::delete_by_map(rb, value! {"id": &item.ids})
-        .await
-        .map(|_| ok_result())?
+    DictType::delete_by_map(rb, value! {"id": &item.ids}).await.map(|_| ok_result())?
 }
 
 /*
@@ -70,20 +60,14 @@ pub async fn delete_sys_dict_type(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/updateDictType")]
-pub async fn update_sys_dict_type(
-    item: web::Json<DictTypeReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_dict_type(item: web::Json<DictTypeReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     let id = req.id;
 
-    if DictType::select_by_id(rb, &id.unwrap_or_default())
-        .await?
-        .is_none()
-    {
+    if DictType::select_by_id(rb, &id.unwrap_or_default()).await?.is_none() {
         return Err(AppError::BusinessError("字典类型不存在"));
     }
 
@@ -98,9 +82,7 @@ pub async fn update_sys_dict_type(
 
     let mut data = DictType::from(req);
     data.update_time = Some(DateTime::now());
-    DictType::update_by_map(rb, &data, value! {"id": &id})
-        .await
-        .map(|_| ok_result())?
+    DictType::update_by_map(rb, &data, value! {"id": &id}).await.map(|_| ok_result())?
 }
 
 /*
@@ -109,22 +91,12 @@ pub async fn update_sys_dict_type(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/updateDictTypeStatus")]
-pub async fn update_sys_dict_type_status(
-    item: web::Json<UpdateDictTypeStatusReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_dict_type_status(item: web::Json<UpdateDictTypeStatusReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_dict_type_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
-    let update_sql = format!(
-        "update sys_dict_type set status = ? where id in ({})",
-        req.ids
-            .iter()
-            .map(|_| "?")
-            .collect::<Vec<&str>>()
-            .join(", ")
-    );
+    let update_sql = format!("update sys_dict_type set status = ? where id in ({})", req.ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", "));
 
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
@@ -137,10 +109,7 @@ pub async fn update_sys_dict_type_status(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/queryDictTypeDetail")]
-pub async fn query_sys_dict_type_detail(
-    item: web::Json<QueryDictTypeDetailReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_dict_type_detail(item: web::Json<QueryDictTypeDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_dict_type_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -159,10 +128,7 @@ pub async fn query_sys_dict_type_detail(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictType/queryDictTypeList")]
-pub async fn query_sys_dict_type_list(
-    item: web::Json<QueryDictTypeListReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_dict_type_list(item: web::Json<QueryDictTypeListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_dict_type_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -173,13 +139,5 @@ pub async fn query_sys_dict_type_list(
     let page = &PageRequest::new(item.page_no, item.page_size);
     DictType::select_dict_type_list(rb, page, dict_name, dict_type, status)
         .await
-        .map(|x| {
-            ok_result_page(
-                x.records
-                    .into_iter()
-                    .map(|x| x.into())
-                    .collect::<Vec<DictTypeResp>>(),
-                x.total,
-            )
-        })?
+        .map(|x| ok_result_page(x.records.into_iter().map(|x| x.into()).collect::<Vec<DictTypeResp>>(), x.total))?
 }

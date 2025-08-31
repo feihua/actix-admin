@@ -13,16 +13,11 @@ use rbs::value;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/deleteOperateLog")]
-pub async fn delete_sys_operate_log(
-    item: web::Json<DeleteOperateLogReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn delete_sys_operate_log(item: web::Json<DeleteOperateLogReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_operate_log params: {:?}", &item);
     let rb = &data.batis;
 
-    OperateLog::delete_by_map(rb, value! {"id": &item.ids})
-        .await
-        .map(|_| ok_result())?
+    OperateLog::delete_by_map(rb, value! {"id": &item.ids}).await.map(|_| ok_result())?
 }
 
 /*
@@ -44,10 +39,7 @@ pub async fn clean_sys_operate_log(data: web::Data<AppState>) -> AppResult<impl 
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/queryOperateLogDetail")]
-pub async fn query_sys_operate_log_detail(
-    item: web::Json<QueryOperateLogDetailReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_operate_log_detail(item: web::Json<QueryOperateLogDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_operate_log_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -66,10 +58,7 @@ pub async fn query_sys_operate_log_detail(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/operateLog/queryOperateLogList")]
-pub async fn query_sys_operate_log_list(
-    item: web::Json<QueryOperateLogListReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_operate_log_list(item: web::Json<QueryOperateLogListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_operate_log_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -100,13 +89,5 @@ pub async fn query_sys_operate_log_list(
         &status,
     )
     .await
-    .map(|x| {
-        ok_result_page(
-            x.records
-                .into_iter()
-                .map(|x| x.into())
-                .collect::<Vec<OperateLogResp>>(),
-            x.total,
-        )
-    })?
+    .map(|x| ok_result_page(x.records.into_iter().map(|x| x.into()).collect::<Vec<OperateLogResp>>(), x.total))?
 }

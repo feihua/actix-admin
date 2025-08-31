@@ -26,19 +26,13 @@ use std::collections::{HashMap, HashSet};
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/addUser")]
-pub async fn add_sys_user(
-    item: web::Json<UserReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn add_sys_user(item: web::Json<UserReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("add sys_user params: {:?}", &item);
     let rb = &data.batis;
 
     let req = item.0;
 
-    if User::select_by_user_name(rb, &req.user_name)
-        .await?
-        .is_some()
-    {
+    if User::select_by_user_name(rb, &req.user_name).await?.is_some() {
         return Err(AppError::BusinessError("登录账号已存在"));
     }
 
@@ -55,14 +49,9 @@ pub async fn add_sys_user(
 
     let mut list: Vec<UserPost> = Vec::new();
     for post_id in post_ids {
-        list.push(UserPost {
-            user_id: id.i64(),
-            post_id,
-        })
+        list.push(UserPost { user_id: id.i64(), post_id })
     }
-    UserPost::insert_batch(rb, &list, list.len() as u64)
-        .await
-        .map(|_| ok_result())?
+    UserPost::insert_batch(rb, &list, list.len() as u64).await.map(|_| ok_result())?
 }
 
 /*
@@ -71,22 +60,11 @@ pub async fn add_sys_user(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/deleteUser")]
-pub async fn delete_sys_user(
-    http_req: HttpRequest,
-    item: web::Json<DeleteUserReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn delete_sys_user(http_req: HttpRequest, item: web::Json<DeleteUserReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_user params: {:?}", &item);
     let rb = &data.batis;
 
-    let user_id = http_req
-        .headers()
-        .get("userId")
-        .unwrap()
-        .to_str()
-        .unwrap_or_default()
-        .parse::<i64>()
-        .unwrap_or_default();
+    let user_id = http_req.headers().get("userId").unwrap().to_str().unwrap_or_default().parse::<i64>().unwrap_or_default();
 
     log::info!("delete sys_user params user_id {:?}", user_id);
 
@@ -100,9 +78,7 @@ pub async fn delete_sys_user(
 
     UserRole::delete_by_map(rb, value! {"user_id": &ids}).await?;
     UserPost::delete_by_map(rb, value! {"user_id": &ids}).await?;
-    User::delete_by_map(rb, value! {"id": &item.ids})
-        .await
-        .map(|_| ok_result())?
+    User::delete_by_map(rb, value! {"id": &item.ids}).await.map(|_| ok_result())?
 }
 
 /*
@@ -111,10 +87,7 @@ pub async fn delete_sys_user(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/updateUser")]
-pub async fn update_sys_user(
-    item: web::Json<UserReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_user(item: web::Json<UserReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_user params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -161,9 +134,7 @@ pub async fn update_sys_user(
 
     let mut data = User::from(req);
     data.update_time = Some(DateTime::now());
-    User::update_by_map(rb, &data, value! {"id": &id})
-        .await
-        .map(|_| ok_result())?
+    User::update_by_map(rb, &data, value! {"id": &id}).await.map(|_| ok_result())?
 }
 
 /*
@@ -172,10 +143,7 @@ pub async fn update_sys_user(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/updateUserStatus")]
-pub async fn update_sys_user_status(
-    item: web::Json<UpdateUserStatusReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_user_status(item: web::Json<UpdateUserStatusReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_user_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -185,14 +153,7 @@ pub async fn update_sys_user_status(
         return Err(AppError::BusinessError("不允许操作超级管理员用户"));
     }
 
-    let update_sql = format!(
-        "update sys_user set status = ? where id in ({})",
-        req.ids
-            .iter()
-            .map(|_| "?")
-            .collect::<Vec<&str>>()
-            .join(", ")
-    );
+    let update_sql = format!("update sys_user set status = ? where id in ({})", req.ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", "));
 
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
@@ -205,10 +166,7 @@ pub async fn update_sys_user_status(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/resetUserPassword")]
-pub async fn reset_sys_user_password(
-    item: web::Json<ResetUserPwdReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn reset_sys_user_password(item: web::Json<ResetUserPwdReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("reset sys_user_password params: {:?}", &item);
 
     let rb = &data.batis;
@@ -226,9 +184,7 @@ pub async fn reset_sys_user_password(
         Some(x) => {
             let mut user = x;
             user.password = req.password;
-            User::update_by_map(rb, &user, value! {"id": &user.id})
-                .await
-                .map(|_| ok_result())?
+            User::update_by_map(rb, &user, value! {"id": &user.id}).await.map(|_| ok_result())?
         }
     }
 }
@@ -239,23 +195,12 @@ pub async fn reset_sys_user_password(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/updateUserPassword")]
-pub async fn update_sys_user_password(
-    http_req: HttpRequest,
-    item: web::Json<UpdateUserPwdReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_user_password(http_req: HttpRequest, item: web::Json<UpdateUserPwdReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_user_password params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
-    let user_id = http_req
-        .headers()
-        .get("userId")
-        .unwrap()
-        .to_str()
-        .unwrap_or_default()
-        .parse::<i64>()
-        .unwrap_or_default();
+    let user_id = http_req.headers().get("userId").unwrap().to_str().unwrap_or_default().parse::<i64>().unwrap_or_default();
 
     log::info!("query user menu params user_id {:?}", user_id);
 
@@ -267,9 +212,7 @@ pub async fn update_sys_user_password(
                 return Err(AppError::BusinessError("旧密码不正确"));
             }
             user.password = req.re_pwd;
-            User::update_by_map(rb, &user, value! {"id": &user.id})
-                .await
-                .map(|_| ok_result())?
+            User::update_by_map(rb, &user, value! {"id": &user.id}).await.map(|_| ok_result())?
         }
     }
 }
@@ -280,10 +223,7 @@ pub async fn update_sys_user_password(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/queryUserDetail")]
-pub async fn query_sys_user_detail(
-    item: web::Json<QueryUserDetailReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_user_detail(item: web::Json<QueryUserDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_user_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -304,11 +244,7 @@ pub async fn query_sys_user_detail(
         }
     };
 
-    let post_ids = UserPost::select_by_map(rb, value! {"user_id": item.id})
-        .await?
-        .iter()
-        .map(|x| x.post_id)
-        .collect::<Vec<i64>>();
+    let post_ids = UserPost::select_by_map(rb, value! {"user_id": item.id}).await?.iter().map(|x| x.post_id).collect::<Vec<i64>>();
 
     x.dept_info = dept;
     x.post_ids = Some(post_ids);
@@ -322,10 +258,7 @@ pub async fn query_sys_user_detail(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/queryUserList")]
-pub async fn query_sys_user_list(
-    item: web::Json<QueryUserListReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_user_list(item: web::Json<QueryUserListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_user_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -337,15 +270,7 @@ pub async fn query_sys_user_list(
     let page = &PageRequest::new(item.page_no, item.page_size);
     User::select_sys_user_list(rb, page, mobile, user_name, status, dept_id)
         .await
-        .map(|x| {
-            ok_result_page(
-                x.records
-                    .into_iter()
-                    .map(|x| x.into())
-                    .collect::<Vec<UserResp>>(),
-                x.total,
-            )
-        })?
+        .map(|x| ok_result_page(x.records.into_iter().map(|x| x.into()).collect::<Vec<UserResp>>(), x.total))?
 }
 
 /*
@@ -353,22 +278,13 @@ pub async fn query_sys_user_list(
  *author：刘飞华
  */
 #[post("/system/user/login")]
-pub async fn login(
-    http_request: HttpRequest,
-    item: web::Json<UserLoginReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn login(http_request: HttpRequest, item: web::Json<UserLoginReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("user login params: {:?}, {:?}", &item, data.batis);
     let rb = &data.batis;
 
     let req = item.0;
 
-    let user_agent = http_request
-        .headers()
-        .get("User-Agent")
-        .unwrap()
-        .to_str()
-        .unwrap();
+    let user_agent = http_request.headers().get("User-Agent").unwrap().to_str().unwrap();
     log::info!("user login params user_agent {:?}", user_agent);
 
     let agent = UserAgentUtil::new(user_agent);
@@ -395,14 +311,7 @@ pub async fn login(
             let btn_menu = query_btn_menu(&id, rb.clone()).await;
 
             if btn_menu.len() == 0 {
-                add_login_log(
-                    rb,
-                    req.mobile,
-                    0,
-                    "用户没有分配角色或者菜单,不能登录",
-                    agent,
-                )
-                .await;
+                add_login_log(rb, req.mobile, 0, "用户没有分配角色或者菜单,不能登录", agent).await;
                 return Err(AppError::BusinessError("用户没有分配角色或者菜单,不能登录"));
             }
 
@@ -444,11 +353,7 @@ async fn add_login_log(rb: &RBatis, name: String, status: i8, msg: &str, agent: 
 
     match LoginLog::insert(rb, &sys_login_log).await {
         Ok(_u) => log::info!("add_login_log success: {:?}", sys_login_log),
-        Err(err) => log::error!(
-            "add_login_log error params: {:?}, error message: {:?}",
-            sys_login_log,
-            err.to_string()
-        ),
+        Err(err) => log::error!("add_login_log error params: {:?}, error message: {:?}", sys_login_log, err.to_string()),
     }
 }
 
@@ -484,17 +389,12 @@ async fn query_btn_menu(id: &i64, rb: RBatis) -> Vec<String> {
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/queryUserRole")]
-pub async fn query_user_role(
-    item: web::Json<QueryUserRoleReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_user_role(item: web::Json<QueryUserRoleReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query user_role params: {:?}", item);
     let rb = &data.batis;
 
     let mut user_role_ids: Vec<i64> = Vec::new();
-    let sys_role_list = Role::select_all(rb)
-        .await
-        .map(|x| x.into_iter().map(|x| x.into()).collect::<Vec<RoleResp>>())?;
+    let sys_role_list = Role::select_all(rb).await.map(|x| x.into_iter().map(|x| x.into()).collect::<Vec<RoleResp>>())?;
 
     if item.user_id != 1 {
         let vec1 = UserRole::select_by_map(rb, value! {"user_id": item.user_id}).await?;
@@ -502,10 +402,7 @@ pub async fn query_user_role(
             user_role_ids.push(x.role_id);
         }
     }
-    ok_result_data(QueryUserRoleResp {
-        sys_role_list,
-        user_role_ids,
-    })
+    ok_result_data(QueryUserRoleResp { sys_role_list, user_role_ids })
 }
 /*
  *更新用户角色
@@ -513,10 +410,7 @@ pub async fn query_user_role(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/user/updateUserRole")]
-pub async fn update_user_role(
-    item: web::Json<UpdateUserRoleReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_user_role(item: web::Json<UpdateUserRoleReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update_user_role params: {:?}", item);
     let rb = &data.batis;
 
@@ -552,18 +446,10 @@ pub async fn update_user_role(
  *date：2025/01/08 17:16:44
  */
 #[get("/system/user/queryUserMenu")]
-pub async fn query_user_menu(
-    req: HttpRequest,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> AppResult<impl Responder> {
     let rb = &data.batis;
 
-    let user_id = req
-        .headers()
-        .get("userId")
-        .and_then(|header| header.to_str().ok())
-        .and_then(|s| s.parse::<i64>().ok())
-        .unwrap_or(0);
+    let user_id = req.headers().get("userId").and_then(|header| header.to_str().ok()).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0);
 
     log::info!("query user menu params user_id {:?}", user_id);
 
@@ -573,9 +459,7 @@ pub async fn query_user_menu(
         Some(user) => {
             //role_id为1是超级管理员--判断是不是超级管理员
             let sql_str = "select count(id) from sys_user_role where role_id = 1 and user_id = ?";
-            let count = rb
-                .query_decode::<i32>(sql_str, vec![value!(user.id)])
-                .await?;
+            let count = rb.query_decode::<i32>(sql_str, vec![value!(user.id)]).await?;
 
             let sys_menu_list: Vec<Menu>;
 
@@ -625,9 +509,7 @@ pub async fn query_user_menu(
             let resp = QueryUserMenuResp {
                 sys_menu,
                 btn_menu,
-                avatar:
-                    "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png"
-                        .to_string(),
+                avatar: "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png".to_string(),
                 name: user.user_name,
             };
 

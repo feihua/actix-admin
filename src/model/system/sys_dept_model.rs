@@ -2,10 +2,10 @@
 // author：刘飞华
 // createTime：2024/12/25 10:01:11
 
+use crate::vo::system::sys_dept_vo::{DeptReq, DeptResp};
 use rbatis::rbdc::datetime::DateTime;
 use rbatis::RBatis;
 use serde::{Deserialize, Serialize};
-use crate::vo::system::sys_dept_vo::{DeptReq, DeptResp};
 /*
  *部门
  *author：刘飞华
@@ -15,7 +15,7 @@ use crate::vo::system::sys_dept_vo::{DeptReq, DeptResp};
 pub struct Dept {
     pub id: Option<i64>,               //部门id
     pub parent_id: i64,                //父部门id
-    pub ancestors: Option<String>,             //祖级列
+    pub ancestors: Option<String>,     //祖级列
     pub dept_name: String,             //部门名称
     pub sort: i32,                     //显示顺序
     pub leader: String,                //负责人

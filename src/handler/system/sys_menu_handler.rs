@@ -14,10 +14,7 @@ use rbs::value;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/addMenu")]
-pub async fn add_sys_menu(
-    item: web::Json<MenuReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn add_sys_menu(item: web::Json<MenuReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("add sys_menu params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -43,10 +40,7 @@ pub async fn add_sys_menu(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/deleteMenu")]
-pub async fn delete_sys_menu(
-    item: web::Json<DeleteMenuReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn delete_sys_menu(item: web::Json<DeleteMenuReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_menu params: {:?}", &item);
     let rb = &data.batis;
 
@@ -68,10 +62,7 @@ pub async fn delete_sys_menu(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/updateMenu")]
-pub async fn update_sys_menu(
-    item: web::Json<MenuReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_menu(item: web::Json<MenuReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_menu params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -108,22 +99,12 @@ pub async fn update_sys_menu(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/updateMenuStatus")]
-pub async fn update_sys_menu_status(
-    item: web::Json<UpdateMenuStatusReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_menu_status(item: web::Json<UpdateMenuStatusReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_menu_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
-    let update_sql = format!(
-        "update sys_menu set status = ? where id in ({})",
-        req.ids
-            .iter()
-            .map(|_| "?")
-            .collect::<Vec<&str>>()
-            .join(", ")
-    );
+    let update_sql = format!("update sys_menu set status = ? where id in ({})", req.ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", "));
 
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
@@ -135,10 +116,7 @@ pub async fn update_sys_menu_status(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/queryMenuDetail")]
-pub async fn query_sys_menu_detail(
-    item: web::Json<QueryMenuDetailReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_menu_detail(item: web::Json<QueryMenuDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_menu_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -157,10 +135,7 @@ pub async fn query_sys_menu_detail(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/menu/queryMenuList")]
-pub async fn query_sys_menu_list(
-    item: web::Json<QueryMenuListReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_menu_list(item: web::Json<QueryMenuListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_menu_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -181,9 +156,9 @@ pub async fn query_sys_menu_list_simple(data: web::Data<AppState>) -> AppResult<
     let mut menu_list: Vec<MenuListSimpleDataResp> = Vec::new();
     for x in list {
         menu_list.push(MenuListSimpleDataResp {
-            id: x.id, //主键
-            menu_name: x.menu_name,       //菜单名称
-            parent_id: x.parent_id,       //父ID
+            id: x.id,               //主键
+            menu_name: x.menu_name, //菜单名称
+            parent_id: x.parent_id, //父ID
         })
     }
 

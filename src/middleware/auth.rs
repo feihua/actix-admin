@@ -34,9 +34,7 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(AuthMiddleware {
-            service: Rc::new(service),
-        }))
+        ready(Ok(AuthMiddleware { service: Rc::new(service) }))
     }
 }
 
@@ -61,14 +59,7 @@ where
         let path = req.path().to_string();
 
         let def = header::HeaderValue::from_str("").unwrap();
-        let token = req
-            .headers()
-            .get("Authorization")
-            .unwrap_or(&def)
-            .to_str()
-            .ok()
-            .unwrap()
-            .replace("Bearer ", "");
+        let token = req.headers().get("Authorization").unwrap_or(&def).to_str().ok().unwrap().replace("Bearer ", "");
 
         return Box::pin(async move {
             log::info!("Hi from start. You requested path: {}", path);
@@ -101,11 +92,7 @@ where
                         "code": 2,
                         "path": path
                     });
-                    log::error!(
-                        "Hi from start. You requested path: {}, token: {}",
-                        path,
-                        token
-                    );
+                    log::error!("Hi from start. You requested path: {}, token: {}", path, token);
                     return Err(error::ErrorUnauthorized(john.to_string()));
                 }
             };
@@ -117,17 +104,13 @@ where
                     break;
                 }
             }
-            req.headers_mut()
-                .insert("userId".parse().unwrap(), HeaderValue::from(jwt_token.id));
+            req.headers_mut().insert("userId".parse().unwrap(), HeaderValue::from(jwt_token.id));
             if flag {
                 let fut = svc.call(req);
                 let res = fut.await?;
                 Ok(res)
             } else {
-                log::error!(
-                    "Hi from start. You requested path: {:?}",
-                    jwt_token.permissions
-                );
+                log::error!("Hi from start. You requested path: {:?}", jwt_token.permissions);
                 let res = json!({
                     "msg": "无权限访问",
                     "code": 1,

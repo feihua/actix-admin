@@ -2,9 +2,9 @@
 // author：刘飞华
 // createTime：2024/12/25 10:01:11
 
+use crate::vo::system::sys_dict_type_vo::{DictTypeReq, DictTypeResp};
 use rbatis::rbdc::datetime::DateTime;
 use serde::{Deserialize, Serialize};
-use crate::vo::system::sys_dict_type_vo::{DictTypeReq, DictTypeResp};
 /*
  *字典类型
  *author：刘飞华
@@ -12,11 +12,11 @@ use crate::vo::system::sys_dict_type_vo::{DictTypeReq, DictTypeResp};
  */
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DictType {
-    pub id: Option<i64>,          //字典主键
+    pub id: Option<i64>,               //字典主键
     pub dict_name: String,             //字典名称
     pub dict_type: String,             //字典类型
     pub status: i8,                    //状态（0：停用，1:正常）
-    pub remark: Option<String>,                //备注
+    pub remark: Option<String>,        //备注
     pub create_time: Option<DateTime>, //创建时间
     pub update_time: Option<DateTime>, //修改时间
 }

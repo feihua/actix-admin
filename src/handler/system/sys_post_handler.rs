@@ -15,10 +15,7 @@ use rbs::value;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/addPost")]
-pub async fn add_sys_post(
-    item: web::Json<PostReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn add_sys_post(item: web::Json<PostReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("add sys_post params: {:?}", &item);
     let rb = &data.batis;
 
@@ -32,9 +29,7 @@ pub async fn add_sys_post(
         return Err(AppError::BusinessError("岗位编码已存在"));
     }
 
-    Post::insert(rb, &Post::from(req))
-        .await
-        .map(|_| ok_result())?
+    Post::insert(rb, &Post::from(req)).await.map(|_| ok_result())?
 }
 
 /*
@@ -43,10 +38,7 @@ pub async fn add_sys_post(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/deletePost")]
-pub async fn delete_sys_post(
-    item: web::Json<DeletePostReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn delete_sys_post(item: web::Json<DeletePostReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_post params: {:?}", &item);
     let rb = &data.batis;
 
@@ -57,9 +49,7 @@ pub async fn delete_sys_post(
         }
     }
 
-    Post::delete_by_map(rb, value! {"id": &item.ids})
-        .await
-        .map(|_| ok_result())?
+    Post::delete_by_map(rb, value! {"id": &item.ids}).await.map(|_| ok_result())?
 }
 
 /*
@@ -68,19 +58,13 @@ pub async fn delete_sys_post(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/updatePost")]
-pub async fn update_sys_post(
-    item: web::Json<PostReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_post(item: web::Json<PostReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_post params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
     let id = req.id;
-    if Post::select_by_id(rb, &id.unwrap_or_default())
-        .await?
-        .is_none()
-    {
+    if Post::select_by_id(rb, &id.unwrap_or_default()).await?.is_none() {
         return Err(AppError::BusinessError("岗位不存在"));
     }
 
@@ -98,9 +82,7 @@ pub async fn update_sys_post(
 
     let mut data = Post::from(req);
     data.update_time = Some(DateTime::now());
-    Post::update_by_map(rb, &data, value! {"id": &id})
-        .await
-        .map(|_| ok_result())?
+    Post::update_by_map(rb, &data, value! {"id": &id}).await.map(|_| ok_result())?
 }
 
 /*
@@ -109,22 +91,12 @@ pub async fn update_sys_post(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/updatePostStatus")]
-pub async fn update_sys_post_status(
-    item: web::Json<UpdatePostStatusReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_post_status(item: web::Json<UpdatePostStatusReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_post_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
-    let update_sql = format!(
-        "update sys_post set status = ? where id in ({})",
-        req.ids
-            .iter()
-            .map(|_| "?")
-            .collect::<Vec<&str>>()
-            .join(", ")
-    );
+    let update_sql = format!("update sys_post set status = ? where id in ({})", req.ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", "));
 
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
@@ -137,10 +109,7 @@ pub async fn update_sys_post_status(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/queryPostDetail")]
-pub async fn query_sys_post_detail(
-    item: web::Json<QueryPostDetailReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_post_detail(item: web::Json<QueryPostDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_post_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -159,10 +128,7 @@ pub async fn query_sys_post_detail(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/post/queryPostList")]
-pub async fn query_sys_post_list(
-    item: web::Json<QueryPostListReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_post_list(item: web::Json<QueryPostListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_post_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -173,13 +139,5 @@ pub async fn query_sys_post_list(
     let page = &PageRequest::new(item.page_no, item.page_size);
     Post::select_post_list(rb, page, post_code, post_name, status)
         .await
-        .map(|x| {
-            ok_result_page(
-                x.records
-                    .into_iter()
-                    .map(|x| x.into())
-                    .collect::<Vec<PostResp>>(),
-                x.total,
-            )
-        })?
+        .map(|x| ok_result_page(x.records.into_iter().map(|x| x.into()).collect::<Vec<PostResp>>(), x.total))?
 }

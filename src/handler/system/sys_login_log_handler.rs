@@ -13,10 +13,7 @@ use rbs::value;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/deleteLoginLog")]
-pub async fn delete_sys_login_log(
-    item: web::Json<DeleteLoginLogReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn delete_sys_login_log(item: web::Json<DeleteLoginLogReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_login_log params: {:?}", &item);
     let rb = &data.batis;
 
@@ -42,10 +39,7 @@ pub async fn clean_sys_login_log(data: web::Data<AppState>) -> AppResult<impl Re
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/queryLoginLogDetail")]
-pub async fn query_sys_login_log_detail(
-    item: web::Json<QueryLoginLogDetailReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_login_log_detail(item: web::Json<QueryLoginLogDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_login_log_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -64,10 +58,7 @@ pub async fn query_sys_login_log_detail(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/loginLog/queryLoginLogList")]
-pub async fn query_sys_login_log_list(
-    item: web::Json<QueryLoginLogListReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_login_log_list(item: web::Json<QueryLoginLogListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_login_log_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -78,7 +69,7 @@ pub async fn query_sys_login_log_list(
     let status = item.status.unwrap_or(2); //登录状态(0:失败,1:成功)
 
     let page = &PageRequest::new(item.page_no, item.page_size);
-    LoginLog::select_login_log_list(rb, page, name, ipaddr, browser, os, &status).await
+    LoginLog::select_login_log_list(rb, page, name, ipaddr, browser, os, &status)
+        .await
         .map(|x| ok_result_page(x.records.into_iter().map(|x| x.into()).collect::<Vec<LoginLogResp>>(), x.total))?
-
 }

@@ -14,10 +14,7 @@ use rbs::value;
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/addDictData")]
-pub async fn add_sys_dict_data(
-    item: web::Json<DictDataReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn add_sys_dict_data(item: web::Json<DictDataReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("add sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
 
@@ -42,10 +39,7 @@ pub async fn add_sys_dict_data(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/deleteDictData")]
-pub async fn delete_sys_dict_data(
-    item: web::Json<DeleteDictDataReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn delete_sys_dict_data(item: web::Json<DeleteDictDataReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("delete sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
 
@@ -58,10 +52,7 @@ pub async fn delete_sys_dict_data(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/updateDictData")]
-pub async fn update_sys_dict_data(
-    item: web::Json<DictDataReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_dict_data(item: web::Json<DictDataReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_dict_data params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
@@ -94,22 +85,12 @@ pub async fn update_sys_dict_data(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/updateDictDataStatus")]
-pub async fn update_sys_dict_data_status(
-    item: web::Json<UpdateDictDataStatusReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn update_sys_dict_data_status(item: web::Json<UpdateDictDataStatusReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_dict_data_status params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
-    let update_sql = format!(
-        "update sys_dict_data set status = ? where id in ({})",
-        req.ids
-            .iter()
-            .map(|_| "?")
-            .collect::<Vec<&str>>()
-            .join(", ")
-    );
+    let update_sql = format!("update sys_dict_data set status = ? where id in ({})", req.ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", "));
 
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
@@ -122,10 +103,7 @@ pub async fn update_sys_dict_data_status(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/queryDictDataDetail")]
-pub async fn query_sys_dict_data_detail(
-    item: web::Json<QueryDictDataDetailReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_dict_data_detail(item: web::Json<QueryDictDataDetailReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_dict_data_detail params: {:?}", &item);
     let rb = &data.batis;
 
@@ -144,10 +122,7 @@ pub async fn query_sys_dict_data_detail(
  *date：2025/01/08 17:16:44
  */
 #[post("/system/dictData/queryDictDataList")]
-pub async fn query_sys_dict_data_list(
-    item: web::Json<QueryDictDataListReq>,
-    data: web::Data<AppState>,
-) -> AppResult<impl Responder> {
+pub async fn query_sys_dict_data_list(item: web::Json<QueryDictDataListReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("query sys_dict_data_list params: {:?}", &item);
     let rb = &data.batis;
 
@@ -156,6 +131,7 @@ pub async fn query_sys_dict_data_list(
     let status = item.status.unwrap_or(2); //状态（0：停用，1:正常）
 
     let page = &PageRequest::new(item.page_no, item.page_size);
-    DictData::select_dict_data_list(rb, page, dict_label, dict_type, status).await
+    DictData::select_dict_data_list(rb, page, dict_label, dict_type, status)
+        .await
         .map(|x| ok_result_page(x.records.into_iter().map(|x| x.into()).collect::<Vec<DictDataResp>>(), x.total))?
 }

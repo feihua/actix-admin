@@ -2,10 +2,10 @@
 // createTime：2024/12/12 14:41:44
 
 use crate::rbatis::rbatis_codegen::IntoSql;
+use crate::vo::system::sys_menu_vo::{MenuReq, MenuResp};
 use rbatis::rbdc::datetime::DateTime;
 use rbatis::RBatis;
 use serde::{Deserialize, Serialize};
-use crate::vo::system::sys_menu_vo::{MenuReq, MenuResp};
 /*
  *菜单信息
  *author：刘飞华
@@ -19,7 +19,7 @@ pub struct Menu {
     pub visible: i8,                   //菜单状态（0:隐藏, 显示:1）
     pub status: i8,                    //状态(1:正常，0:禁用)
     pub sort: i32,                     //排序
-    pub parent_id: Option<i64>,                //父ID
+    pub parent_id: Option<i64>,        //父ID
     pub menu_url: Option<String>,      //路由路径
     pub api_url: Option<String>,       //接口URL
     pub menu_icon: Option<String>,     //菜单图标
