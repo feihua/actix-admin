@@ -59,9 +59,7 @@ pub async fn delete_sys_role(item: web::Json<DeleteRoleReq>, data: web::Data<App
     }
 
     RoleMenu::delete_by_map(rb, value! {"role_id": &item.ids}).await?;
-
     RoleDept::delete_by_map(rb, value! {"role_id": &item.ids}).await?;
-
     Role::delete_by_map(rb, value! {"id": &item.ids}).await.map(|_| ok_result())?
 }
 
@@ -77,6 +75,7 @@ pub async fn update_sys_role(item: web::Json<RoleReq>, data: web::Data<AppState>
     let req = item.0;
 
     let id = req.id;
+
     if id == Some(1) {
         return Err(AppError::BusinessError("不允许操作超级管理员角色"));
     }

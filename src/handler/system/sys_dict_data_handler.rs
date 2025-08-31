@@ -20,14 +20,12 @@ pub async fn add_sys_dict_data(item: web::Json<DictDataReq>, data: web::Data<App
 
     let req = item.0;
 
-    let option = DictData::select_by_dict_label(rb, &req.dict_type, &req.dict_label).await?;
-    if option.is_some() {
-        return Err(AppError::BusinessError("新增字典数据失败,字典标签已存在"));
+    if DictData::select_by_dict_label(rb, &req.dict_type, &req.dict_label).await?.is_some() {
+        return Err(AppError::BusinessError("字典标签已存在"));
     }
 
-    let detail = DictData::select_by_dict_value(rb, &req.dict_type, &req.dict_value).await?;
-    if detail.is_some() {
-        return Err(AppError::BusinessError("新增字典数据失败,字典键值已存在"));
+    if DictData::select_by_dict_value(rb, &req.dict_type, &req.dict_value).await?.is_some() {
+        return Err(AppError::BusinessError("字典键值已存在"));
     }
 
     DictData::insert(rb, &DictData::from(req)).await.map(|_| ok_result())?
@@ -58,19 +56,20 @@ pub async fn update_sys_dict_data(item: web::Json<DictDataReq>, data: web::Data<
     let req = item.0;
 
     let id = req.id;
+
     if DictData::select_by_id(rb, &id.unwrap_or_default()).await?.is_none() {
-        return Err(AppError::BusinessError("更新字典数据失败,字典数据不存在"));
+        return Err(AppError::BusinessError("字典数据不存在"));
     }
 
     if let Some(x) = DictData::select_by_dict_label(rb, &req.dict_type, &req.dict_label).await? {
         if x.id != id {
-            return Err(AppError::BusinessError("更新字典数据失败,字典标签已存在"));
+            return Err(AppError::BusinessError("字典标签已存在"));
         }
     }
 
     if let Some(x) = DictData::select_by_dict_value(rb, &req.dict_type, &req.dict_value).await? {
         if x.id != id {
-            return Err(AppError::BusinessError("更新字典数据失败,字典键值已存在"));
+            return Err(AppError::BusinessError("字典键值已存在"));
         }
     }
 

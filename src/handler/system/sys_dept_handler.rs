@@ -20,8 +20,7 @@ pub async fn add_sys_dept(item: web::Json<DeptReq>, data: web::Data<AppState>) -
 
     let req = item.0;
 
-    let option = Dept::select_by_dept_name(rb, &req.dept_name, req.parent_id).await?;
-    if option.is_some() {
+    if Dept::select_by_dept_name(rb, &req.dept_name, req.parent_id).await?.is_some() {
         return Err(AppError::BusinessError("部门名称已存在"));
     }
 
@@ -33,6 +32,7 @@ pub async fn add_sys_dept(item: web::Json<DeptReq>, data: web::Data<AppState>) -
             }
             let ancestors = format!("{},{}", dept.ancestors.unwrap_or_default(), &req.parent_id);
             let mut sys_dept = Dept::from(req);
+            sys_dept.id = None;
             sys_dept.ancestors = Some(ancestors);
             Dept::insert(rb, &sys_dept).await.map(|_| ok_result())?
         }
@@ -69,9 +69,10 @@ pub async fn delete_sys_dept(item: web::Json<DeleteDeptReq>, data: web::Data<App
 pub async fn update_sys_dept(item: web::Json<DeptReq>, data: web::Data<AppState>) -> AppResult<impl Responder> {
     log::info!("update sys_dept params: {:?}", &item);
     let rb = &data.batis;
-    let mut req = item.0;
+    let req = item.0;
 
     let id = req.id;
+
     if Some(req.parent_id) == id {
         return Err(AppError::BusinessError("上级部门不能是自己"));
     }
@@ -88,8 +89,8 @@ pub async fn update_sys_dept(item: web::Json<DeptReq>, data: web::Data<AppState>
         }
     };
 
-    if let Some(x) = Dept::select_by_dept_name(rb, &req.dept_name, req.parent_id).await? {
-        if x.id != id {
+    if let Some(dept) = Dept::select_by_dept_name(rb, &req.dept_name, req.parent_id).await? {
+        if dept.id != id {
             return Err(AppError::BusinessError("部门名称已存在"));
         }
     }
@@ -116,9 +117,9 @@ pub async fn update_sys_dept(item: web::Json<DeptReq>, data: web::Data<AppState>
 
         rb.exec(&update_sql, param).await?;
     }
-    req.ancestors = Some(ancestors.clone());
 
     let mut data = Dept::from(req);
+    data.ancestors = Some(ancestors);
     data.update_time = Some(DateTime::now());
     Dept::update_by_map(rb, &data, value! {"id":  &id}).await.map(|_| ok_result())?
 }
@@ -185,7 +186,7 @@ pub async fn query_sys_dept_list(item: web::Json<QueryDeptListReq>, data: web::D
     let rb = &data.batis;
 
     let dept_name = item.dept_name.as_deref().unwrap_or_default(); //部门名称
-    let status = item.status.unwrap_or(2); //部状态（0：停用，1:正常）
+    let status = item.status.unwrap_or_default(); //部状态（0：停用，1:正常）
 
     Dept::select_page_dept_list(rb, dept_name, status)
         .await

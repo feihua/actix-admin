@@ -69,6 +69,7 @@ pub async fn query_sys_login_log_list(item: web::Json<QueryLoginLogListReq>, dat
     let status = item.status.unwrap_or(2); //登录状态(0:失败,1:成功)
 
     let page = &PageRequest::new(item.page_no, item.page_size);
+
     LoginLog::select_login_log_list(rb, page, name, ipaddr, browser, os, &status)
         .await
         .map(|x| ok_result_page(x.records.into_iter().map(|x| x.into()).collect::<Vec<LoginLogResp>>(), x.total))?

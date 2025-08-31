@@ -25,8 +25,7 @@ pub async fn add_sys_menu(item: web::Json<MenuReq>, data: web::Data<AppState>) -
 
     let menu_url = req.menu_url.clone();
     if menu_url.is_some() {
-        let option = Menu::select_by_menu_url(rb, &menu_url.unwrap()).await?;
-        if option.is_some() {
+        if Menu::select_by_menu_url(rb, &menu_url.unwrap()).await?.is_some() {
             return Err(AppError::BusinessError("路由路径已存在"));
         }
     }
@@ -44,7 +43,6 @@ pub async fn delete_sys_menu(item: web::Json<DeleteMenuReq>, data: web::Data<App
     log::info!("delete sys_menu params: {:?}", &item);
     let rb = &data.batis;
 
-    //有下级的时候 不能直接删除
     if select_count_menu_by_parent_id(rb, &item.id).await? > 0 {
         return Err(AppError::BusinessError("存在子菜单,不允许删除"));
     }

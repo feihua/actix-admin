@@ -53,6 +53,7 @@ pub async fn update_sys_notice(item: web::Json<NoticeReq>, data: web::Data<AppSt
     let req = item.0;
 
     let id = req.id;
+    
     if Notice::select_by_id(rb, &id.unwrap_or_default()).await?.is_none() {
         return Err(AppError::BusinessError("通知公告表不存在"));
     }

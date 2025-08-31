@@ -21,8 +21,7 @@ pub async fn add_sys_dict_type(item: web::Json<DictTypeReq>, data: web::Data<App
 
     let req = item.0;
 
-    let option = DictType::select_by_dict_type(rb, &req.dict_type).await?;
-    if option.is_some() {
+    if DictType::select_by_dict_type(rb, &req.dict_type).await?.is_some() {
         return Err(AppError::BusinessError("字典类型已存在"));
     }
 
@@ -39,7 +38,8 @@ pub async fn delete_sys_dict_type(item: web::Json<DeleteDictTypeReq>, data: web:
     log::info!("delete sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
 
-    let ids = item.ids.clone();
+    let ids = &item.ids;
+
     for id in ids {
         let p = match DictType::select_by_id(rb, &id).await? {
             None => return Err(AppError::BusinessError("字典类型不存在,不能删除")),

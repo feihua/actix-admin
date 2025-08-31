@@ -227,15 +227,15 @@ pub async fn query_sys_user_detail(item: web::Json<QueryUserDetailReq>, data: we
     log::info!("query sys_user_detail params: {:?}", &item);
     let rb = &data.batis;
 
-    let mut x = match User::select_by_id(rb, item.id).await? {
+    let mut user = match User::select_by_id(rb, item.id).await? {
         None => return Err(AppError::BusinessError("用户不存在")),
         Some(user) => {
-            let a: UserResp = user.into();
-            a
+            let res: UserResp = user.into();
+            res
         }
     };
 
-    let dept = match Dept::select_by_id(rb, &x.dept_id).await? {
+    let dept = match Dept::select_by_id(rb, &user.dept_id).await? {
         None => return Err(AppError::BusinessError("部门不存在")),
 
         Some(y) => {
@@ -246,10 +246,10 @@ pub async fn query_sys_user_detail(item: web::Json<QueryUserDetailReq>, data: we
 
     let post_ids = UserPost::select_by_map(rb, value! {"user_id": item.id}).await?.iter().map(|x| x.post_id).collect::<Vec<i64>>();
 
-    x.dept_info = dept;
-    x.post_ids = Some(post_ids);
+    user.dept_info = dept;
+    user.post_ids = Some(post_ids);
 
-    ok_result_data(x)
+    ok_result_data(user)
 }
 
 /*
@@ -369,15 +369,24 @@ async fn query_btn_menu(id: &i64, rb: RBatis) -> Vec<String> {
         let data = Menu::select_all(&rb).await;
 
         for x in data.unwrap_or_default() {
-            btn_menu.push(x.api_url.unwrap_or_default());
+            if let Some(api_url) = x.api_url {
+                if api_url != "" {
+                    btn_menu.push(api_url);
+                }
+            }
         }
         log::info!("admin login: {:?}", id);
         btn_menu
     } else {
         let btn_menu_map: Vec<HashMap<String, String>> = rb.query_decode("select distinct u.api_url from sys_user_role t left join sys_role usr on t.role_id = usr.id left join sys_role_menu srm on usr.id = srm.role_id left join sys_menu u on srm.menu_id = u.id where t.user_id = ?", vec![value!(id)]).await.unwrap();
         for x in btn_menu_map {
-            btn_menu.push(x.get("api_url").unwrap().to_string());
+            if let Some(api_url) = x.get("api_url") {
+                if api_url.to_string() != "" {
+                    btn_menu.push(api_url.to_string());
+                }
+            }
         }
+
         log::info!("ordinary login: {:?}", id);
         btn_menu
     }
@@ -397,8 +406,8 @@ pub async fn query_user_role(item: web::Json<QueryUserRoleReq>, data: web::Data<
     let sys_role_list = Role::select_all(rb).await.map(|x| x.into_iter().map(|x| x.into()).collect::<Vec<RoleResp>>())?;
 
     if item.user_id != 1 {
-        let vec1 = UserRole::select_by_map(rb, value! {"user_id": item.user_id}).await?;
-        for x in vec1 {
+        let list = UserRole::select_by_map(rb, value! {"user_id": item.user_id}).await?;
+        for x in list {
             user_role_ids.push(x.role_id);
         }
     }
@@ -485,8 +494,10 @@ pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> App
                     sys_menu_ids.insert(x.parent_id.unwrap_or_default().clone());
                 }
 
-                if x.api_url.clone().unwrap_or_default().len() > 0 {
-                    btn_menu.push(x.api_url.unwrap_or_default());
+                if let Some(api_url) = x.api_url.clone() {
+                    if api_url != "" {
+                        btn_menu.push(api_url);
+                    }
                 }
             }
 
@@ -509,7 +520,7 @@ pub async fn query_user_menu(req: HttpRequest, data: web::Data<AppState>) -> App
             let resp = QueryUserMenuResp {
                 sys_menu,
                 btn_menu,
-                avatar: "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png".to_string(),
+                avatar: user.avatar,
                 name: user.user_name,
             };
 

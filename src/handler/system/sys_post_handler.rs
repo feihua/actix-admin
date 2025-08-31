@@ -64,6 +64,7 @@ pub async fn update_sys_post(item: web::Json<PostReq>, data: web::Data<AppState>
     let req = item.0;
 
     let id = req.id;
+
     if Post::select_by_id(rb, &id.unwrap_or_default()).await?.is_none() {
         return Err(AppError::BusinessError("岗位不存在"));
     }
