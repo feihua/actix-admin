@@ -5,7 +5,7 @@
 use rbatis::rbdc::datetime::DateTime;
 use rbatis::RBatis;
 use serde::{Deserialize, Serialize};
-
+use crate::vo::system::sys_dict_data_vo::{DictDataReq, DictDataResp};
 /*
  *字典数据表
  *author：刘飞华
@@ -22,7 +22,7 @@ pub struct DictData {
     pub list_class: String,            //表格回显样式
     pub is_default: String,            //是否默认（Y是 N否）
     pub status: i8,                    //状态（0：停用，1:正常）
-    pub remark: String,                //备注
+    pub remark: Option<String>,                //备注
     pub create_time: Option<DateTime>, //创建时间
     pub update_time: Option<DateTime>, //修改时间
 }
@@ -34,6 +34,43 @@ pub struct DictData {
  */
 rbatis::crud!(DictData {}, "sys_dict_data");
 
+impl From<DictDataReq> for DictData {
+    fn from(item: DictDataReq) -> Self {
+        DictData {
+            id: item.id,                 //字典编码
+            dict_sort: item.dict_sort,   //字典排序
+            dict_label: item.dict_label, //字典标签
+            dict_value: item.dict_value, //字典键值
+            dict_type: item.dict_type,   //字典类型
+            css_class: item.css_class,   //样式属性（其他样式扩展）
+            list_class: item.list_class, //格回显样式
+            is_default: item.is_default, //是否默认（Y是 N否）
+            status: item.status,         //状态（0：停用，1:正常）
+            remark: item.remark,         //备注
+            create_time: None,           //创建时间
+            update_time: None,           //修改时间
+        }
+    }
+}
+
+impl Into<DictDataResp> for DictData {
+    fn into(self) -> DictDataResp {
+        DictDataResp {
+            id: self.id,                   //字典编码
+            dict_sort: self.dict_sort,     //字典排序
+            dict_label: self.dict_label,   //字典标签
+            dict_value: self.dict_value,   //字典键值
+            dict_type: self.dict_type,     //字典类型
+            css_class: self.css_class,     //样式属性（其他样式扩展）
+            list_class: self.list_class,   //格回显样式
+            is_default: self.is_default,   //是否默认（Y是 N否）
+            status: self.status,           //状态（0：停用，1:正常）
+            remark: self.remark,           //备注
+            create_time: self.create_time, //创建时间
+            update_time: self.update_time, //修改时间
+        }
+    }
+}
 /*
  *根据id查询字典数据表
  *author：刘飞华

@@ -2,6 +2,7 @@ use crate::common::error::AppResult;
 use actix_web::web::Json;
 use serde::Serialize;
 use std::fmt::Debug;
+use rbatis::rbdc::DateTime;
 
 // 统一返回vo
 #[derive(Serialize, Debug, Clone)]
@@ -59,4 +60,16 @@ pub fn ok_result_data<T>(data: T) -> AppResult<Json<BaseResponse<T>>> {
         code: 0,
         data: Some(data),
     }))
+}
+pub fn serialize_datetime<S>(dt: &Option<DateTime>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match dt {
+        Some(datetime) => {
+            let formatted = datetime.format("YYYY-MM-DD hh:mm:ss");
+            serializer.serialize_str(&formatted)
+        }
+        None => serializer.serialize_str(""),
+    }
 }

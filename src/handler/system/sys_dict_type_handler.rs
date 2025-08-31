@@ -2,11 +2,11 @@ use crate::common::error::{AppError, AppResult};
 use crate::common::result::{ok_result, ok_result_data, ok_result_page};
 use crate::model::system::sys_dict_data_model::{count_dict_data_by_type, update_dict_data_type};
 use crate::model::system::sys_dict_type_model::DictType;
-use crate::utils::time_util::time_to_string;
 use crate::vo::system::sys_dict_type_vo::*;
 use crate::AppState;
 use actix_web::{post, web, Responder};
 use rbatis::plugin::page::PageRequest;
+use rbatis::rbdc::DateTime;
 use rbs::value;
 
 /*
@@ -16,7 +16,7 @@ use rbs::value;
  */
 #[post("/system/dictType/addDictType")]
 pub async fn add_sys_dict_type(
-    item: web::Json<AddDictTypeReq>,
+    item: web::Json<DictTypeReq>,
     data: web::Data<AppState>,
 ) -> AppResult<impl Responder> {
     log::info!("add sys_dict_type params: {:?}", &item);
@@ -29,19 +29,9 @@ pub async fn add_sys_dict_type(
         return Err(AppError::BusinessError("字典类型已存在"));
     }
 
-    let sys_dict_type = DictType {
-        id: None,                          //字典主键
-        dict_name: req.dict_name,               //字典名称
-        dict_type: req.dict_type,               //字典类型
-        status: req.status,                     //状态（0：停用，1:正常）
-        remark: req.remark.unwrap_or_default(), //备注
-        create_time: None,                      //创建时间
-        update_time: None,                      //修改时间
-    };
-
-    DictType::insert(rb, &sys_dict_type).await?;
-
-    ok_result()
+    DictType::insert(rb, &DictType::from(req))
+        .await
+        .map(|_| ok_result())?
 }
 
 /*
@@ -69,9 +59,9 @@ pub async fn delete_sys_dict_type(
         }
     }
 
-    DictType::delete_by_map(rb, value! {"id": &item.ids}).await?;
-
-    ok_result()
+    DictType::delete_by_map(rb, value! {"id": &item.ids})
+        .await
+        .map(|_| ok_result())?
 }
 
 /*
@@ -81,19 +71,24 @@ pub async fn delete_sys_dict_type(
  */
 #[post("/system/dictType/updateDictType")]
 pub async fn update_sys_dict_type(
-    item: web::Json<UpdateDictTypeReq>,
+    item: web::Json<DictTypeReq>,
     data: web::Data<AppState>,
 ) -> AppResult<impl Responder> {
     log::info!("update sys_dict_type params: {:?}", &item);
     let rb = &data.batis;
     let req = item.0;
 
-    if DictType::select_by_id(rb, &req.id).await?.is_none() {
+    let id = req.id;
+
+    if DictType::select_by_id(rb, &id.unwrap_or_default())
+        .await?
+        .is_none()
+    {
         return Err(AppError::BusinessError("字典类型不存在"));
     }
 
     if let Some(x) = DictType::select_by_dict_type(rb, &req.dict_type).await? {
-        if x.id.unwrap_or_default() != req.id {
+        if x.id != id {
             return Err(AppError::BusinessError("字典类型已存在"));
         }
 
@@ -101,24 +96,11 @@ pub async fn update_sys_dict_type(
         update_dict_data_type(rb, &*req.dict_type, &dict_type).await?;
     }
 
-    let sys_dict_type = DictType {
-        id: Some(req.id),             //字典主键
-        dict_name: req.dict_name,               //字典名称
-        dict_type: req.dict_type,               //字典类型
-        status: req.status,                     //状态（0：停用，1:正常）
-        remark: req.remark.unwrap_or_default(), //备注
-        create_time: None,                      //创建时间
-        update_time: None,                      //修改时间
-    };
-
-    DictType::update_by_map(
-        rb,
-        &sys_dict_type,
-        value! {"id": &sys_dict_type.id},
-    )
-    .await?;
-
-    ok_result()
+    let mut data = DictType::from(req);
+    data.update_time = Some(DateTime::now());
+    DictType::update_by_map(rb, &data, value! {"id": &id})
+        .await
+        .map(|_| ok_result())?
 }
 
 /*
@@ -146,9 +128,7 @@ pub async fn update_sys_dict_type_status(
 
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
-    rb.exec(&update_sql, param).await?;
-
-    ok_result()
+    rb.exec(&update_sql, param).await.map(|_| ok_result())?
 }
 
 /*
@@ -164,22 +144,13 @@ pub async fn query_sys_dict_type_detail(
     log::info!("query sys_dict_type_detail params: {:?}", &item);
     let rb = &data.batis;
 
-    match DictType::select_by_id(rb, &item.id).await? {
-        None => Err(AppError::BusinessError("字典类型不存在")),
-        Some(x) => {
-            let sys_dict_type = QueryDictTypeDetailResp {
-                id: x.id.unwrap_or_default(),     //字典主键
-                dict_name: x.dict_name,                     //字典名称
-                dict_type: x.dict_type,                     //字典类型
-                status: x.status,                           //状态（0：停用，1:正常）
-                remark: x.remark,                           //备注
-                create_time: time_to_string(x.create_time), //创建时间
-                update_time: time_to_string(x.update_time), //修改时间
-            };
-
-            ok_result_data(sys_dict_type)
-        }
-    }
+    DictType::select_by_id(rb, &item.id).await?.map_or_else(
+        || Err(AppError::BusinessError("字典类型不存在")),
+        |x| {
+            let data: DictTypeResp = x.into();
+            ok_result_data(data)
+        },
+    )
 }
 
 /*
@@ -200,23 +171,15 @@ pub async fn query_sys_dict_type_list(
     let status = item.status.unwrap_or(2); //状态（0：停用，1:正常）
 
     let page = &PageRequest::new(item.page_no, item.page_size);
-    let d = DictType::select_dict_type_list(rb, page, dict_name, dict_type, status).await?;
-
-    let mut list: Vec<DictTypeListDataResp> = Vec::new();
-
-    let total = d.total;
-
-    for x in d.records {
-        list.push(DictTypeListDataResp {
-            id: x.id.unwrap_or_default(),     //字典主键
-            dict_name: x.dict_name,                     //字典名称
-            dict_type: x.dict_type,                     //字典类型
-            status: x.status,                           //状态（0：停用，1:正常）
-            remark: x.remark,                           //备注
-            create_time: time_to_string(x.create_time), //创建时间
-            update_time: time_to_string(x.update_time), //修改时间
-        })
-    }
-
-    ok_result_page(list, total)
+    DictType::select_dict_type_list(rb, page, dict_name, dict_type, status)
+        .await
+        .map(|x| {
+            ok_result_page(
+                x.records
+                    .into_iter()
+                    .map(|x| x.into())
+                    .collect::<Vec<DictTypeResp>>(),
+                x.total,
+            )
+        })?
 }
