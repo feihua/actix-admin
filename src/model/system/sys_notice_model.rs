@@ -70,7 +70,12 @@ impl_select!(Notice{select_by_id(id:&i64) -> Option => "`where id = #{id} limit 
  *author：刘飞华
  *date：2024/12/25 10:01:11
  */
-impl_select!(Notice{select_by_title(title:&str) -> Option => "`where notice_title = #{title} limit 1`"}, "sys_notice");
+impl_select!(Notice{check_title_unique(id:Option<i64>,title:&str) -> Option => "
+    where notice_title = #{title}
+    if id != null:
+      ` and id != #{id} `
+    ` limit 1` "
+}, "sys_notice");
 
 /*
  *根据条件分页查询通知公告表

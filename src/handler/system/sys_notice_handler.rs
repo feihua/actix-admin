@@ -20,7 +20,7 @@ pub async fn add_sys_notice(item: web::Json<NoticeReq>, data: web::Data<AppState
 
     let mut req = item.0;
 
-    if Notice::select_by_title(rb, &req.notice_title).await?.is_some() {
+    if Notice::check_title_unique(rb, None, &req.notice_title).await?.is_some() {
         return Err(AppError::BusinessError("公告标题已存在"));
     };
 
@@ -58,10 +58,8 @@ pub async fn update_sys_notice(item: web::Json<NoticeReq>, data: web::Data<AppSt
         return Err(AppError::BusinessError("通知公告表不存在"));
     }
 
-    if let Some(x) = Notice::select_by_title(rb, &req.notice_title).await? {
-        if x.id != id {
-            return Err(AppError::BusinessError("公告标题已存在"));
-        }
+    if Notice::check_title_unique(rb, id, &req.notice_title).await?.is_some() {
+        return Err(AppError::BusinessError("公告标题已存在"));
     }
 
     let mut data = Notice::from(req);
