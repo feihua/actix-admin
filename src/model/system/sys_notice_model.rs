@@ -77,13 +77,13 @@ impl_select!(Notice{select_by_title(title:&str) -> Option => "`where notice_titl
  *author：刘飞华
  *date：2024/12/25 10:01:11
  */
-impl_select_page!(Notice{select_sys_notice_list(title:&str, notice_type:i8, status:i8) =>"
+impl_select_page!(Notice{select_sys_notice_list(title:Option<String>, notice_type: Option<i8>, status:Option<i8>) =>"
     where 1=1
-     if title != '':
+     if title != '' && title != null:
        ` and notice_title = #{title} `
-     if notice_type != 0:
+     if notice_type != 0 && notice_type != null:
       ` and notice_type = #{notice_type} `
-     if status != 2:
+     if status != 2 && status != null:
        ` and status = #{status} `
      if !sql.contains('count'):
        ` order by create_time desc `"

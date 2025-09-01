@@ -53,7 +53,7 @@ pub async fn update_sys_notice(item: web::Json<NoticeReq>, data: web::Data<AppSt
     let req = item.0;
 
     let id = req.id;
-    
+
     if Notice::select_by_id(rb, &id.unwrap_or_default()).await?.is_none() {
         return Err(AppError::BusinessError("通知公告表不存在"));
     }
@@ -117,11 +117,12 @@ pub async fn query_sys_notice_list(item: web::Json<QueryNoticeListReq>, data: we
     log::info!("query sys_notice_list params: {:?}", &item);
     let rb = &data.batis;
 
-    let notice_title = item.notice_title.as_deref().unwrap_or_default();
-    let notice_type = item.notice_type.unwrap_or(0); //公告类型（1:通知,2:公告）
-    let status = item.status.unwrap_or(2); //公告状态（0:关闭,1:正常 ）
+    let req = item.0;
+    let notice_title = req.notice_title; //标题
+    let notice_type = req.notice_type; //公告类型（1:通知,2:公告）
+    let status = req.status; //公告状态（0:关闭,1:正常 ）
 
-    let page = &PageRequest::new(item.page_no, item.page_size);
+    let page = &PageRequest::new(req.page_no, req.page_size);
 
     Notice::select_sys_notice_list(rb, page, notice_title, notice_type, status)
         .await
