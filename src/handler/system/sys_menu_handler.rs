@@ -30,7 +30,7 @@ pub async fn add_sys_menu(item: web::Json<MenuReq>, data: web::Data<AppState>) -
         }
     }
 
-    Menu::insert(rb, &Menu::from(req)).await.map(|_| ok_result())?
+    Menu::insert(rb, &Menu::from(req)).await.map(|x| ok_result_data(x.last_insert_id))?
 }
 
 /*

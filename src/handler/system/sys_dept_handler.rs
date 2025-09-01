@@ -34,7 +34,7 @@ pub async fn add_sys_dept(item: web::Json<DeptReq>, data: web::Data<AppState>) -
             let mut sys_dept = Dept::from(req);
             sys_dept.id = None;
             sys_dept.ancestors = Some(ancestors);
-            Dept::insert(rb, &sys_dept).await.map(|_| ok_result())?
+            Dept::insert(rb, &sys_dept).await.map(|x| ok_result_data(x.last_insert_id))?
         }
     }
 }

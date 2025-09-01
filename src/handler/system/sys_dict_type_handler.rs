@@ -25,7 +25,7 @@ pub async fn add_sys_dict_type(item: web::Json<DictTypeReq>, data: web::Data<App
         return Err(AppError::BusinessError("字典类型已存在"));
     }
 
-    DictType::insert(rb, &DictType::from(req)).await.map(|_| ok_result())?
+    DictType::insert(rb, &DictType::from(req)).await.map(|x| ok_result_data(x.last_insert_id))?
 }
 
 /*

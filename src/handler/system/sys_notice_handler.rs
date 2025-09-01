@@ -25,7 +25,7 @@ pub async fn add_sys_notice(item: web::Json<NoticeReq>, data: web::Data<AppState
     };
 
     req.id = None;
-    Notice::insert(rb, &Notice::from(req)).await.map(|_| ok_result())?
+    Notice::insert(rb, &Notice::from(req)).await.map(|x| ok_result_data(x.last_insert_id))?
 }
 
 /*

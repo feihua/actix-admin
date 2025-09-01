@@ -28,7 +28,7 @@ pub async fn add_sys_dict_data(item: web::Json<DictDataReq>, data: web::Data<App
         return Err(AppError::BusinessError("字典键值已存在"));
     }
 
-    DictData::insert(rb, &DictData::from(req)).await.map(|_| ok_result())?
+    DictData::insert(rb, &DictData::from(req)).await.map(|x| ok_result_data(x.last_insert_id))?
 }
 
 /*

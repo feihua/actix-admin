@@ -29,7 +29,7 @@ pub async fn add_sys_post(item: web::Json<PostReq>, data: web::Data<AppState>) -
         return Err(AppError::BusinessError("岗位编码已存在"));
     }
 
-    Post::insert(rb, &Post::from(req)).await.map(|_| ok_result())?
+    Post::insert(rb, &Post::from(req)).await.map(|x| ok_result_data(x.last_insert_id))?
 }
 
 /*

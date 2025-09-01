@@ -33,7 +33,7 @@ pub async fn add_sys_role(item: web::Json<RoleReq>, data: web::Data<AppState>) -
         return Err(AppError::BusinessError("角色权限已存在"));
     }
 
-    Role::insert(rb, &Role::from(req)).await.map(|_| ok_result())?
+    Role::insert(rb, &Role::from(req)).await.map(|x| ok_result_data(x.last_insert_id))?
 }
 
 /*
