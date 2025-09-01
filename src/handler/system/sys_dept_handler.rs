@@ -149,7 +149,9 @@ pub async fn update_sys_dept_status(item: web::Json<UpdateDeptStatusReq>, data: 
             }
         }
     }
-    let update_sql = format!("update sys_dept set status = ? where id in ({})", req.ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", "));
+
+    let ids = req.ids.iter().map(|_| "?").collect::<Vec<&str>>().join(", ");
+    let update_sql = format!("update sys_dept set status = ? where id in ({})", ids);
 
     let mut param = vec![value!(req.status)];
     param.extend(req.ids.iter().map(|&id| value!(id)));
