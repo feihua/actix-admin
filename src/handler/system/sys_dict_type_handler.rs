@@ -41,14 +41,14 @@ pub async fn delete_sys_dict_type(item: web::Json<DeleteDictTypeReq>, data: web:
     let ids = &item.ids;
 
     for id in ids {
-        let p = match DictType::select_by_id(rb, &id).await? {
+        match DictType::select_by_id(rb, &id).await? {
             None => return Err(AppError::BusinessError("字典类型不存在,不能删除")),
-            Some(p) => p,
+            Some(p) => {
+                if count_dict_data_by_type(rb, &p.dict_type).await? > 0 {
+                    return Err(AppError::BusinessError("已分配,不能删除"));
+                }
+            }
         };
-
-        if count_dict_data_by_type(rb, &p.dict_type).await? > 0 {
-            return Err(AppError::BusinessError("已分配,不能删除"));
-        }
     }
 
     DictType::delete_by_map(rb, value! {"id": &item.ids}).await.map(|_| ok_result())?
